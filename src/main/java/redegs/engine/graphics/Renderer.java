@@ -4,22 +4,29 @@ import redegs.engine.engine.Camera;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
-import static org.lwjgl.glfw.GLFW.glfwGetTime;
 
-public class Renderer {
-    private Pipeline pipeline;
+public class Renderer<T extends Pipeline> {
+    protected T pipeline;
 
-    public Renderer(int width, int height) {
-        pipeline = new Pipeline("main", width, height);
+
+    public Renderer(Supplier<T> supplier) {
+        this.pipeline = supplier.get();
     }
 
-    public static Renderer unlitRenderer(int width, int height) {
-        Renderer r = new Renderer(width, height);
-        r.NewPass(UnlitPass.class);
-
-        return r;
-    }
+//    public static Renderer unlitRenderer(int width, int height) {
+//        Renderer r = new Renderer(width, height);
+//        r.NewPass(UnlitPass.class);
+//
+//        return r;
+//    }
+//    public static Renderer litRenderer(int width, int height) {
+//        Renderer r = new Renderer(width, height);
+//        r.NewPass(LitPass.class);
+//
+//        return r;
+//    }
 
     public void Execute(double delta_time, double elapsed_time) {
         pipeline.getRenderContext().delta_time = delta_time;

@@ -1,5 +1,6 @@
 package redegs.engine.engine;
 
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -8,12 +9,15 @@ public class Camera {
     protected Matrix4f projection;
     protected Float fov;
 
+    protected Vector3f position;
     protected Integer width, height;
 
     public Camera(int width, int height) {
         view = new Matrix4f().identity();
-        projection =  perspectiveDefaultMatrix(width, height);
+        projection = perspectiveDefaultMatrix(width, height);
         fov = projection.perspectiveFov();
+
+        position = new Vector3f();
 
         this.width = width;
         this.height = height;
@@ -26,19 +30,27 @@ public class Camera {
     }
 
     public void translateViewPosition(Vector3f pos) {
-        this.view.translate(pos);
+        this.position.add(pos);
+
+        this.view.identity();
+        this.view.translate(
+                -position.x,
+                -position.y,
+                -position.z
+        );
     }
 
     public void setFov(Float fov, Integer width, Integer height) {
         this.fov = fov;
 
-        Float rfov = (float) Math.toRadians(fov); // Field of View in radians
-        float aspectRatio = (float) width / height; // Window dimensions
-        float nearPlane = 0.1f;  // Closest visible distance
-        float farPlane = 1000.0f; // Farthest visible distance
+        Float rfov = (float) Math.toRadians(fov);
+        float aspectRatio = (float) width / height;
+        float nearPlane = 0.1f;
+        float farPlane = 1000.0f;
 
         this.projection = perspectiveMatrix(rfov, aspectRatio, nearPlane, farPlane);
     }
+
     public void setFov(Float fov) {
         this.setFov(fov, this.width, this.height);
     }
@@ -62,11 +74,34 @@ public class Camera {
     }
 
     public static Matrix4f perspectiveDefaultMatrix(int width, int height) {
-        float fov = (float) Math.toRadians(80.0f); // Field of View in radians
-        float aspectRatio = (float) width / height; // Window dimensions
-        float nearPlane = 0.1f;  // Closest visible distance
-        float farPlane = 1000.0f; // Farthest visible distance
+        float fov = (float) Math.toRadians(80.0f);
+        float aspectRatio = (float) width / height;
+        float nearPlane = 0.1f;
+        float farPlane = 1000.0f;
 
         return perspectiveMatrix(fov, aspectRatio, nearPlane, farPlane);
+    }
+
+    public void setPosition(Vector3f pos) {
+        this.position.set(pos);
+
+        this.view.identity();
+        this.view.translate(
+                -position.x,
+                -position.y,
+                -position.z
+        );
+    }
+
+    public Vector3f getPosition() {
+        return this.position;
+    }
+
+    public Matrix3f getNormalMatrix() {
+        // Extract the 3x3 rotation/scale part from the view matrix
+        // For view matrix, we want the inverse transpose of the view's rotation
+        Matrix3f normalMatrix = new Matrix3f();
+        this.view.get3x3(normalMatrix);
+        return normalMatrix.invert().transpose();
     }
 }

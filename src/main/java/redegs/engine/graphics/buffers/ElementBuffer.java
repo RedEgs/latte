@@ -1,8 +1,5 @@
-package redegs.engine.graphics;
+package redegs.engine.graphics.buffers;
 
-import org.lwjgl.BufferUtils;
-
-import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.opengl.GL15C.*;

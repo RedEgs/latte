@@ -1,19 +1,20 @@
-package redegs.engine.graphics;
+package redegs.engine.graphics.passes;
 
-import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
+import redegs.engine.graphics.*;
+import redegs.engine.graphics.buffers.UniformBuffer;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
-public class UnlitPass extends RenderPass {
-    Shader shader = new Shader(Shader.FragmentShader_camera, Shader.VertexShader_camera);
+public class LitPass extends RenderPass {
+    Shader shader = new Shader(Shader.FragmentShader_lit, Shader.VertexShader_lit);
     UniformBuffer ubo;
 
-    public UnlitPass(RenderContext render_context) {
+    public LitPass(RenderContext render_context) {
         super(render_context);
 
-        name = "UnlitPass";
+        name = "LitPass";
         ubo = new UniformBuffer("CameraInfo", shader, 128, 0);
         updateCameraUniformBuffer(render_context);
 
@@ -26,10 +27,8 @@ public class UnlitPass extends RenderPass {
         updateCameraUniformBuffer(render_context);
 
         shader.use();
-        for (int i = 0; i < render_context.models.size(); i++) {
-            Model m = render_context.models.get(i);
-            m.Draw(shader);
-        }
+        shader.setUniform3f("lightPos", 0, -2, 0);
+        DrawGeometry(render_context, shader);
     }
 
     private void updateCameraUniformBuffer(RenderContext render_context) {

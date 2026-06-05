@@ -1,4 +1,6 @@
-package redegs.engine.graphics;
+package redegs.engine.graphics.buffers;
+
+import redegs.engine.graphics.Shader;
 
 import java.nio.ByteBuffer;
 

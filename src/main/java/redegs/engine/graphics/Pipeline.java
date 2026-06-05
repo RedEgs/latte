@@ -1,6 +1,7 @@
 package redegs.engine.graphics;
 
 import org.joml.Matrix4f;
+import redegs.Engine;
 import redegs.engine.engine.Camera;
 
 import java.lang.reflect.InvocationTargetException;
@@ -9,29 +10,32 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Pipeline {
-    private String name;
+    private final String name = "GenericPipeline";
     private final RenderContext render_context;
     private final List<RenderPass> render_passes;
 
-    public Pipeline(String name, int width, int height) {
-        this.name = name;
+    public Pipeline() {
         this.render_context = new RenderContext();
         this.render_passes = new ArrayList<>();
 
-        render_context.width = width;
-        render_context.height = height;
+        render_context.width = Engine.getScreenWidth();
+        render_context.height = Engine.getScreenHeight();
 
-        render_context.camera = new Camera(width, height);
+        render_context.camera = new Camera(render_context.width, render_context.height);
         render_context.models = new ArrayList<Model>();
     }
 
     public void Execute() {
-        for (int i = 0; i < render_passes.size(); i++) {
-            RenderPass p = render_passes.get(i);
+        for (RenderPass p : render_passes) {
+            onPrePass(p.name);
             p.Execute(render_context);
-
+            onPostPass(p.name);
         }
     }
+
+    protected void onPrePass(String render_pass_name) {}
+    protected void onPostPass(String render_pass_name) {}
+
 
     public <T extends RenderPass> void NewPass(Class<T> pass) {
         try {

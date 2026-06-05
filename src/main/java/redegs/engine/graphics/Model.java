@@ -36,4 +36,8 @@ public class Model {
         return m;
     }
 
+    public Matrix4f getModelMatrix() {
+        return this.model_matrix;
+    }
+
 }

@@ -128,10 +128,6 @@ public class ControllableCamera extends Camera {
         view.lookAt(position, center, up);
     }
 
-    public void setPosition(Vector3f pos) {
-        this.position.set(pos);
-    }
-
     public Vector3f getPosition() {
         return this.position;
     }

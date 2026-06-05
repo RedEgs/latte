@@ -1,6 +1,8 @@
-package redegs.engine.graphics;
+package redegs.engine.graphics.buffers;
 
 import org.lwjgl.BufferUtils;
+import redegs.engine.graphics.Vertex;
+
 import java.nio.FloatBuffer;
 import java.util.List;
 import static org.lwjgl.opengl.GL15C.*;

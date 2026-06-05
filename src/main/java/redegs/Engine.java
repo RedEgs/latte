@@ -12,6 +12,7 @@ import redegs.engine.engine.ControllableCamera;
 import redegs.engine.engine.Scene;
 import redegs.engine.engine.SceneManager;
 import redegs.engine.graphics.*;
+import redegs.engine.graphics.pipelines.DeferredPipeline;
 import redegs.engine.util.GLException;
 
 import java.nio.*;
@@ -21,6 +22,8 @@ import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL43C.GL_DEBUG_OUTPUT;
+import static org.lwjgl.opengl.GL43C.GL_DEBUG_OUTPUT_SYNCHRONOUS;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 import static redegs.engine.util.Debug.glCheckError;
@@ -33,10 +36,10 @@ public class Engine {
     private static Long window;
 
     private String name = "Latte";
-    private Float version = 0.01f;
+    private final Float version = 0.01f;
 
-    private int screenWidth = 1280;
-    private int screenHeight = 720;
+    private final int screenWidth = 1280;
+    private final int screenHeight = 720;
 
     private double last_time, delta_time;
     SceneManager scene_manager = SceneManager.getInstance();
@@ -56,6 +59,7 @@ public class Engine {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 
@@ -98,12 +102,14 @@ public class Engine {
         GL.createCapabilities();
         glViewport(0, 0, screenWidth, screenHeight);
         glEnable(GL_DEPTH_TEST); // CRITICAL: Enable depth testing!
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
     }
 
     private void Loop() throws GLException {
 
-        Renderer renderer = Renderer.unlitRenderer(screenWidth, screenHeight);
+        Renderer<DeferredPipeline> renderer = new Renderer<>(DeferredPipeline::new);
         scene_manager.setRenderer(renderer);
 
         ControllableCamera camera = new ControllableCamera(screenWidth, screenHeight);
@@ -111,11 +117,11 @@ public class Engine {
 
         Scene main = new Scene(camera);
 
-        Texture texture = new Texture("F:/Programming/Java/Engine/Latte/src/main/resources/brick.jpg");
+        Material m = Material.fromTexture(new Texture("F:/Programming/Java/Engine/Latte/src/main/resources/brick.jpg"));
         Mesh mesh = Mesh.cube();
-        mesh.AddTexture(texture);
-        Model m = Model.fromMesh(mesh);
-        main.addModel(m);
+        mesh.AddMaterial(m);
+        Model model = Model.fromMesh(mesh);
+        main.addModel(model);
 
         scene_manager.AddScene(main, "main");
 

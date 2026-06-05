@@ -1,9 +1,9 @@
 package redegs.engine.graphics;
 
 import org.lwjgl.BufferUtils;
-import org.w3c.dom.Text;
+import redegs.engine.graphics.buffers.ElementBuffer;
+import redegs.engine.graphics.buffers.VertexBuffer;
 
-import java.lang.reflect.Array;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,23 +11,21 @@ import java.util.stream.Collectors;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL11C.*;
-import static org.lwjgl.opengl.GL13C.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13C.glActiveTexture;
 import static redegs.engine.graphics.Vertex.createVertex;
 
 public class Mesh {
     protected List<Vertex> vertices;
     protected IntBuffer indices;
-    protected ArrayList<Texture> textures;
+    protected ArrayList<Material> materials;
 
     protected VertexArray vao;
     protected VertexBuffer vbo;
     protected ElementBuffer ebo;
 
-    public Mesh(List<Vertex> vertices, IntBuffer indices, ArrayList<Texture> textures) {
+    public Mesh(List<Vertex> vertices, IntBuffer indices, ArrayList<Material> materials) {
         this.vertices = vertices;
         this.indices = indices;
-        this.textures = textures;
+        this.materials = materials;
 
         createMesh();
     }
@@ -58,9 +56,8 @@ public class Mesh {
     }
 
     public void Draw(Shader shader) {
-        for (int i = 0; i < textures.size(); i++) {
-            String name = "texture" + String.valueOf(i);
-            textures.get(i).use(shader, i);
+        for (Material material : materials) {
+            material.apply(shader);
         }
 
         vao.bind();
@@ -76,16 +73,16 @@ public class Mesh {
         return indices.asReadOnlyBuffer();
     }
 
-    public List<Texture> getTextures() {
-        return textures.stream().collect(Collectors.toList());
+    public List<Material> getMaterials() {
+        return materials.stream().collect(Collectors.toList());
     }
 
     public void AddVertex(Vertex vertex, int pos) {
         vertices.add(pos, vertex);
     }
 
-    public void AddTexture(Texture texture, int pos) {
-        textures.add(pos, texture);
+    public void AddMaterial(Material material, int pos) {
+        materials.add(pos, material);
     }
 
     public void AddIndice(int indice, int pos) {
@@ -98,8 +95,8 @@ public class Mesh {
         vertices.add(vertex);
     }
 
-    public void AddTexture(Texture texture) {
-        textures.add(texture);
+    public void AddMaterial(Material material) {
+        materials.add(material);
     }
 
     public void AddIndice(int indice) {
@@ -190,4 +187,26 @@ public class Mesh {
         return new Mesh(vertices, indicesBuffer, new ArrayList<>());
     }
 
+    public static Mesh quadScreen() {
+        List<Vertex> vertices = new ArrayList<>();
+
+        // Vertices for a screen-filling quad (NDC coordinates: -1 to 1)
+        // Order: bottom-left, bottom-right, top-right, top-left
+        vertices.add(createVertex(-1f, -1f, 0f, 0f, 0f, 1f, 0f, 0f));  // Bottom-left
+        vertices.add(createVertex( 1f, -1f, 0f, 0f, 0f, 1f, 1f, 0f));  // Bottom-right
+        vertices.add(createVertex( 1f,  1f, 0f, 0f, 0f, 1f, 1f, 1f));  // Top-right
+        vertices.add(createVertex(-1f,  1f, 0f, 0f, 0f, 1f, 0f, 1f));  // Top-left
+
+        // Two triangles forming a fullscreen quad
+        int[] indicesArray = {
+                0, 1, 2,  // first triangle (bottom-left, bottom-right, top-right)
+                2, 3, 0   // second triangle (top-right, top-left, bottom-left)
+        };
+
+        IntBuffer indicesBuffer = BufferUtils.createIntBuffer(indicesArray.length);
+        indicesBuffer.put(indicesArray);
+        indicesBuffer.flip();  // Use flip() instead of rewind() for clarity
+
+        return new Mesh(vertices, indicesBuffer, new ArrayList<>());
+    }
 }

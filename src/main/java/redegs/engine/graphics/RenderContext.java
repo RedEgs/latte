@@ -2,6 +2,7 @@ package redegs.engine.graphics;
 
 import org.joml.Matrix4f;
 import redegs.engine.engine.Camera;
+import redegs.engine.graphics.buffers.FrameBuffer;
 
 import java.util.List;
 
@@ -15,4 +16,6 @@ public class RenderContext {
     public Integer width, height;
 
     public List<Model> models;
+
+    public FrameBuffer gbuffer;
 }

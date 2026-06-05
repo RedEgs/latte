@@ -1,6 +1,6 @@
 package redegs.engine.graphics;
 
-import redegs.Main;
+import redegs.Engine;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

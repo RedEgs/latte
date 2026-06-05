@@ -7,6 +7,7 @@ import java.lang.reflect.Array;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL11C.*;
@@ -67,7 +68,43 @@ public class Mesh {
         vao.unbind();
     }
 
+    public List<Vertex> getVertices() {
+        return vertices.stream().collect(Collectors.toList());
+    }
 
+    public IntBuffer getIndices() {
+        return indices.asReadOnlyBuffer();
+    }
+
+    public List<Texture> getTextures() {
+        return textures.stream().collect(Collectors.toList());
+    }
+
+    public void AddVertex(Vertex vertex, int pos) {
+        vertices.add(pos, vertex);
+    }
+
+    public void AddTexture(Texture texture, int pos) {
+        textures.add(pos, texture);
+    }
+
+    public void AddIndice(int indice, int pos) {
+        indices.put(indice, pos);
+    }
+
+
+
+    public void AddVertex(Vertex vertex) {
+        vertices.add(vertex);
+    }
+
+    public void AddTexture(Texture texture) {
+        textures.add(texture);
+    }
+
+    public void AddIndice(int indice) {
+        indices.put(indice);
+    }
 
     public static Mesh cube() {
         List<Vertex> vertices = new ArrayList<>();

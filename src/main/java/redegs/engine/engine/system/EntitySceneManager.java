@@ -1,11 +1,10 @@
 package redegs.engine.engine.system;
 
 import redegs.engine.graphics.Model;
+import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
 import redegs.engine.graphics.system.Renderer;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 
 public final class EntitySceneManager {
@@ -78,6 +77,7 @@ public final class EntitySceneManager {
     private void UpdateScene(double delta_time, double elapsed_time) {
         current_renderer.ClearModels();
         current_renderer.ClearLights();
+        current_renderer.SubmitDirectionalLight(getStore(DirectionalLightSource.class).toList().get(0));
 
         current_renderer.SubmitLights(getStore(PointLightSource.class).toList());
         current_renderer.SubmitModels(getStore(Model.class).toList());

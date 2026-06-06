@@ -10,6 +10,7 @@ import redegs.engine.engine.entities.ControllableCamera;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.Scene;
 import redegs.engine.graphics.Model;
+import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
 import redegs.engine.graphics.pipelines.DeferredPipeline;
 import redegs.engine.graphics.system.Renderer;
@@ -123,6 +124,7 @@ public class Engine {
         //m.getTransform().position.set(0, 0, 0);
 
         m_id = esm.createEntity(m);
+        esm.createEntity(new DirectionalLightSource(new Vector3f(0, -10, 3), new Vector3f(.1f), new Vector3f(0f), new Vector3f(1f, 1f, 1f)));
 
 
         for (int i = 0; i < 10; i++) {

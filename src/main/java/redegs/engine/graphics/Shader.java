@@ -10,7 +10,6 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.opengl.GL20.*;
-import static redegs.engine.util.Debug.glCheckError;
 
 public class Shader {
     private int id;
@@ -440,6 +439,12 @@ public class Shader {
         float intensity;
         float radius;  
     };
+            struct DirectionalLight {
+                vec3 direction;
+                vec3 ambient;
+                vec3 diffuse;
+                vec3 specular;
+            };
     
     uniform sampler2D gPosition;
     uniform sampler2D gNormal;
@@ -448,6 +453,7 @@ public class Shader {
     
     uniform int light_count;
     uniform PointLight lights[10];
+            uniform DirectionalLight dir_light;
     
     void main() {
         // Sample G-buffer textures
@@ -459,6 +465,17 @@ public class Shader {
         vec3 lighting = Albedo * 0.1;
         vec3 viewDir = normalize(viewPos - FragPos);
         
+                vec3 lightDir = normalize(-dir_light.direction);
+                float diff = max(dot(Normal, lightDir), 0.0);
+            
+                vec3 reflectDir = reflect(-lightDir, Normal);
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), Specular);
+                vec3 ambient = dir_light.ambient * Albedo;
+                vec3 diffuse = dir_light.diffuse * diff * Albedo;
+                vec3 specular = dir_light.specular * spec * Albedo;
+            
+                lighting += (ambient + diffuse + specular);
+            
          for (int i = 0; i < light_count; i++) {
                 
             float distance = length(lights[i].position - FragPos);

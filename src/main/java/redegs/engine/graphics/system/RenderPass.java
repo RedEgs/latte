@@ -5,7 +5,6 @@ import redegs.engine.graphics.Shader;
 import redegs.engine.graphics.lights.PointLightSource;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL11.glClearColor;
 
 public class RenderPass {
     protected String name;
@@ -29,6 +28,13 @@ public class RenderPass {
             shader.setUniform1f(name + ".radius", light.radius);
             shader.setUniform1f(name + ".intensity", light.intensity);
         }
+        if (render_context.dir_light != null) {
+            shader.setUniform3f("dir_light.direction", render_context.dir_light.direction);
+            shader.setUniform3f("dir_light.ambient", render_context.dir_light.ambient);
+            shader.setUniform3f("dir_light.diffuse", render_context.dir_light.diffuse);
+            shader.setUniform3f("dir_light.specular", render_context.dir_light.specular);
+        }
+
     }
 
     protected void Clear() {

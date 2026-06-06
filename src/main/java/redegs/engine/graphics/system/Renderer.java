@@ -2,6 +2,7 @@ package redegs.engine.graphics.system;
 
 import redegs.engine.graphics.Camera;
 import redegs.engine.graphics.Model;
+import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
 
 import java.util.ArrayList;
@@ -69,6 +70,10 @@ public class Renderer<T extends Pipeline> {
     }
     public List<Model> getModels() {
         return pipeline.getRenderContext().models;
+    }
+
+    public void SubmitDirectionalLight(DirectionalLightSource light) {
+        pipeline.getRenderContext().dir_light = light;
     }
 
     public void SubmitLight(PointLightSource light) {

@@ -2,28 +2,29 @@ package redegs;
 
 import org.joml.Random;
 import org.joml.Vector3f;
-import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.*;
-import org.lwjgl.system.*;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryStack;
 import redegs.engine.engine.entities.ControllableCamera;
-import redegs.engine.engine.system.Scene;
 import redegs.engine.engine.system.EntitySceneManager;
-import redegs.engine.graphics.*;
+import redegs.engine.engine.system.Scene;
+import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.PointLightSource;
 import redegs.engine.graphics.pipelines.DeferredPipeline;
 import redegs.engine.graphics.system.Renderer;
 import redegs.engine.util.GLException;
 
-import java.nio.*;
+import java.nio.IntBuffer;
 
-import static org.lwjgl.glfw.Callbacks.*;
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.ARBFramebufferSRGB.GL_FRAMEBUFFER_SRGB;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL43C.GL_DEBUG_OUTPUT;
 import static org.lwjgl.opengl.GL43C.GL_DEBUG_OUTPUT_SYNCHRONOUS;
-import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.NULL;
 import static redegs.engine.util.Debug.glCheckError;
 
 
@@ -117,15 +118,11 @@ public class Engine {
 
         int m_id, m_id2;
         Scene main = new Scene(camera) {};
-        Material m = Material.fromTexture(new Texture("src/main/resources/brick.jpg"));
-        Mesh mesh = Mesh.cube();
-        mesh.AddMaterial(m);
-        m_id = esm.createEntity(Model.fromMesh(mesh));
+        Model m = new Model("src/main/resources/scene.gltf");
+        m.centerOrigin();
+        //m.getTransform().position.set(0, 0, 0);
 
-        m = Material.fromTexture(new Texture("src/main/resources/brick.jpg"));
-        mesh = Mesh.cube();
-        mesh.AddMaterial(m);
-        m_id2 = esm.createEntity( Model.fromMesh(mesh));
+        m_id = esm.createEntity(m);
 
 
         for (int i = 0; i < 10; i++) {
@@ -141,8 +138,8 @@ public class Engine {
             float colorz = rand.nextFloat();
 
 
-            esm.getComponent(m_id, Model.class).getModelMatrix().translate(new Vector3f(x, y, z));
-            esm.createEntity(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 5f, 3f));
+            //esm.getComponent(m_id, Model.class).getModelMatrix().translate(new Vector3f(x, y, z));
+            esm.createEntity(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 10f, 3f));
 
         }
 

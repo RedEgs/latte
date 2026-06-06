@@ -1,7 +1,9 @@
 package redegs.engine.graphics.passes;
 
 import org.lwjgl.system.MemoryStack;
-import redegs.engine.graphics.*;
+import redegs.engine.graphics.Mesh;
+import redegs.engine.graphics.MeshPrimitives;
+import redegs.engine.graphics.Shader;
 import redegs.engine.graphics.buffers.UniformBuffer;
 import redegs.engine.graphics.system.RenderContext;
 import redegs.engine.graphics.system.RenderPass;
@@ -13,7 +15,7 @@ import static org.lwjgl.opengl.GL11C.*;
 
 public class LightingPass  extends RenderPass {
     Shader shader = new Shader(Shader.FragmentShader_lighting, Shader.VertexShader_lighting);
-    Mesh quad = Mesh.quadScreen();
+    Mesh quad = MeshPrimitives.quadScreen();
 
     UniformBuffer ubo;
 

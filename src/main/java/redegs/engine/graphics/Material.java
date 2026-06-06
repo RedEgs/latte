@@ -16,8 +16,10 @@ public class Material {
     }
     public void apply(Shader shader) {
         shader.setUniform3f("material.ambient", ambient);
-        diffuse.use(0, shader, "material.diffuse");
-        diffuse.use(1, shader, "material.specular");
+        if (diffuse != null) {
+            diffuse.use(0, shader, "material.diffuse");
+            diffuse.use(1, shader, "material.specular");
+        }
         shader.setUniform1f("material.shininess", shininess);
     }
 

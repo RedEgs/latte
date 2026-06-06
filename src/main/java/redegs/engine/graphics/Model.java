@@ -1,6 +1,7 @@
 package redegs.engine.graphics;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
@@ -8,20 +9,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Model {
-    private List<Mesh> meshes;
-    private Matrix4f model_matrix;
+    private final List<Mesh> meshes;
+    private final Transform transform = new Transform();
 
     public Model() {
         this.meshes = new ArrayList<>();
-        this.model_matrix = new Matrix4f().identity();
+        this.transform.model_matrix = new Matrix4f().identity();
+    }
+
+    public Model(String path) {
+        this.meshes = new ArrayList<>();
+        this.transform.model_matrix = new Matrix4f().identity();
+
+        // Try to load with Assimp first, fall back to OBJ loader
+        try {
+            Model loadedModel = ModelLoader.loadModel(path);
+            this.meshes.addAll(loadedModel.meshes);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void Draw(Shader shader) {
-        for (int i = 0; i < meshes.size(); i++) {
-            Mesh m = meshes.get(i);
+        for (Mesh m : meshes) {
             try (MemoryStack stack = MemoryStack.stackPush()) {
                 FloatBuffer modelBuffer = stack.mallocFloat(16);
-                model_matrix.get(modelBuffer);
+                this.transform.model_matrix.get(modelBuffer);
                 shader.setUniformMat4("model", modelBuffer);
             }
 
@@ -29,15 +42,53 @@ public class Model {
         }
     }
 
+    public void centerOrigin() {
+        // 1. Accumulate all vertex positions across all meshes
+        Vector3f sum = new Vector3f(0, 0, 0);
+        int totalVertices = 0;
+
+        for (Mesh mesh : meshes) {
+            for (Vertex v : mesh.getVertices()) {
+                v.Position.rewind();
+                sum.x += v.Position.get();
+                sum.y += v.Position.get();
+                sum.z += v.Position.get();
+                totalVertices++;
+            }
+        }
+
+        if (totalVertices == 0) return;
+
+        // 2. Calculate centroid
+        Vector3f centroid = sum.div(totalVertices);
+
+        // 3. Apply negative centroid as a translation offset
+        transform.model_matrix.translate(-centroid.x, -centroid.y, -centroid.z);
+    }
+
+    public void addMesh(Mesh mesh) {
+        this.meshes.add(mesh);
+    }
+
+    public List<Mesh> getMeshes() {
+        return new ArrayList<>(meshes);
+    }
+
     public static Model fromMesh(Mesh mesh) {
         Model m = new Model();
         m.meshes.add(mesh);
-
         return m;
     }
 
-    public Matrix4f getModelMatrix() {
-        return this.model_matrix;
+    public Transform getTransform() {
+        return transform;
     }
-    public void setModelMatrix(Matrix4f matrix) {this.model_matrix = matrix;}
+
+    public Matrix4f getModelMatrix() {
+        return this.transform.model_matrix;
+    }
+
+    public void setModelMatrix(Matrix4f matrix) {
+        this.transform.model_matrix = matrix;
+    }
 }

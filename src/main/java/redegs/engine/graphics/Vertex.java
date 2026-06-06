@@ -1,5 +1,6 @@
 package redegs.engine.graphics;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 
@@ -26,6 +27,24 @@ public class Vertex {
 
         vertex.UV = BufferUtils.createFloatBuffer(2);
         vertex.UV.put(u).put(v);
+        vertex.UV.rewind();
+
+        return vertex;
+    }
+
+    public static Vertex createVertex(Vector3f pos, Vector3f normal, Vector2f uv) {
+        Vertex vertex = new Vertex();
+
+        vertex.Position = BufferUtils.createFloatBuffer(3);
+        vertex.Position.put(pos.x).put(pos.y).put(pos.z);
+        vertex.Position.rewind();
+
+        vertex.Normal = BufferUtils.createFloatBuffer(3);
+        vertex.Normal.put(normal.x).put(normal.y).put(normal.z);
+        vertex.Normal.rewind();
+
+        vertex.UV = BufferUtils.createFloatBuffer(2);
+        vertex.UV.put(uv.x).put(uv.y);  // correct
         vertex.UV.rewind();
 
         return vertex;

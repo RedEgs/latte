@@ -9,7 +9,7 @@ public class Camera {
     protected Matrix4f projection;
     protected Float fov;
 
-    protected Vector3f position;
+    protected Transform transform;
     protected Integer width, height;
 
     public Camera(int width, int height) {
@@ -17,7 +17,7 @@ public class Camera {
         projection = perspectiveDefaultMatrix(width, height);
         fov = projection.perspectiveFov();
 
-        position = new Vector3f();
+        transform = new Transform();
 
         this.width = width;
         this.height = height;
@@ -30,13 +30,13 @@ public class Camera {
     }
 
     public void translateViewPosition(Vector3f pos) {
-        this.position.add(pos);
+        this.transform.position.add(pos);
 
         this.view.identity();
         this.view.translate(
-                -position.x,
-                -position.y,
-                -position.z
+                -this.transform.position.x,
+                -this.transform.position.y,
+                -this.transform.position.z
         );
     }
 
@@ -83,18 +83,22 @@ public class Camera {
     }
 
     public void setPosition(Vector3f pos) {
-        this.position.set(pos);
+        this.transform.position.set(pos);
 
         this.view.identity();
         this.view.translate(
-                -position.x,
-                -position.y,
-                -position.z
+                -this.transform.position.x,
+                -this.transform.position.y,
+                -this.transform.position.z
         );
     }
 
+    public Transform getTransform() {
+        return this.transform;
+    }
+
     public Vector3f getPosition() {
-        return this.position;
+        return this.transform.position;
     }
 
     public Matrix3f getNormalMatrix() {

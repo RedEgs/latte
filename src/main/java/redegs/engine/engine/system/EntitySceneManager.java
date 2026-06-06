@@ -1,23 +1,65 @@
-package redegs.engine.engine;
+package redegs.engine.engine.system;
 
 import redegs.engine.graphics.Model;
-import redegs.engine.graphics.Renderer;
 import redegs.engine.graphics.lights.PointLightSource;
+import redegs.engine.graphics.system.Renderer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
-public final class SceneManager {
-    private static SceneManager INSTANCE;
+public final class EntitySceneManager {
+    private static EntitySceneManager INSTANCE;
 
-    private HashMap<String, Scene> scenes = new HashMap<String, Scene>();
+    private final HashMap<String, Scene> scenes = new HashMap<String, Scene>();
+    private final HashMap<Class<?>, ComponentStore<?>> stores = new HashMap<>();
+
     private Scene current_scene;
     private String current_scene_name;
 
+    private int next_entity = 0;
+
     private Renderer current_renderer;
 
-    public SceneManager() {}
+    public EntitySceneManager() {}
+
+    public int createEntity() {
+        return next_entity++;
+    }
+
+    @SafeVarargs
+    public final <T> int createEntity(T... component) {
+        int i = next_entity++;
+        for (T c : component) {
+            addComponent(i, c);
+        }
+        return i;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> ComponentStore<T> getStore(Class<T> type) {
+        return (ComponentStore<T>) stores.computeIfAbsent(
+                type,
+                k -> new ComponentStore<>()
+        );
+    }
+
+    public <T> void addComponent(int entity, T component) {
+        getStore((Class<T>) component.getClass()).add(entity, component);
+    }
+
+    public <T> T getComponent(int entity, Class<T> type) {
+        return getStore(type).get(entity);
+    }
+
+    public <T> boolean hasComponent(int entity, Class<T> type) {
+        return getStore(type).has(entity);
+    }
+
+    public <T> void removeComponent(int entity, Class<T> type) {
+        getStore(type).remove(entity);
+    }
+
 
     public void Execute(double delta_time, double elapsed_time) {
         if (current_scene != null) {
@@ -34,11 +76,11 @@ public final class SceneManager {
     }
 
     private void UpdateScene(double delta_time, double elapsed_time) {
-        getRenderer().ClearModels();
-        getRenderer().ClearLights();
+        current_renderer.ClearModels();
+        current_renderer.ClearLights();
 
-        getRenderer().SubmitLights(current_scene.getLights());
-        getRenderer().SubmitModels(current_scene.getModels());
+        current_renderer.SubmitLights(getStore(PointLightSource.class).toList());
+        current_renderer.SubmitModels(getStore(Model.class).toList());
 
         current_scene.Update(delta_time, elapsed_time);
         current_renderer.setCamera(current_scene.getCamera());
@@ -70,8 +112,8 @@ public final class SceneManager {
         this.current_scene = scene;
         this.current_scene_name = name;
 
-        current_renderer.SubmitModels(current_scene.getModels());
-        current_renderer.SubmitLights(current_scene.getLights());
+        current_renderer.SubmitLights(getStore(PointLightSource.class).toList());
+        current_renderer.SubmitModels(getStore(Model.class).toList());
     }
 
     public Scene GetScene(String name) {
@@ -91,9 +133,9 @@ public final class SceneManager {
         return this.current_renderer;
     }
 
-    public static SceneManager getInstance() {
+    public static EntitySceneManager getInstance() {
         if (INSTANCE == null) {
-            INSTANCE = new SceneManager();
+            INSTANCE = new EntitySceneManager();
         }
         return INSTANCE;
     }

@@ -1,8 +1,7 @@
-package redegs.engine.engine;
+package redegs.engine.engine.system;
 
 import org.lwjgl.glfw.*;
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.glfw.Callbacks.*;
 
 
 public class KeyboardInput {

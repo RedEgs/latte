@@ -1,6 +1,7 @@
-package redegs.engine.graphics;
+package redegs.engine.graphics.system;
 
-import redegs.engine.engine.Camera;
+import redegs.engine.graphics.Camera;
+import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.PointLightSource;
 
 import java.util.ArrayList;

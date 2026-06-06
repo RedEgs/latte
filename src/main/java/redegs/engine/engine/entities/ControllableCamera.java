@@ -1,8 +1,8 @@
-package redegs.engine.engine;
+package redegs.engine.engine.entities;
 
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import redegs.Engine;
+import redegs.engine.graphics.Camera;
 
 import static org.lwjgl.glfw.GLFW.*;
 

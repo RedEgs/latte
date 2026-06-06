@@ -1,36 +1,30 @@
 package redegs;
 
-import org.joml.Matrix4f;
 import org.joml.Random;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
-import redegs.engine.engine.Camera;
-import redegs.engine.engine.ControllableCamera;
-import redegs.engine.engine.Scene;
-import redegs.engine.engine.SceneManager;
+import redegs.engine.engine.entities.ControllableCamera;
+import redegs.engine.engine.system.Scene;
+import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.graphics.*;
 import redegs.engine.graphics.lights.PointLightSource;
 import redegs.engine.graphics.pipelines.DeferredPipeline;
+import redegs.engine.graphics.system.Renderer;
 import redegs.engine.util.GLException;
 
 import java.nio.*;
 
-import static java.lang.Math.sin;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.ARBFramebufferSRGB.GL_FRAMEBUFFER_SRGB;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL43C.GL_DEBUG_OUTPUT;
 import static org.lwjgl.opengl.GL43C.GL_DEBUG_OUTPUT_SYNCHRONOUS;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 import static redegs.engine.util.Debug.glCheckError;
-import static redegs.engine.util.Types.sizeof;
 
 
 public class Engine {
@@ -39,17 +33,16 @@ public class Engine {
     private static Long window;
 
     private final Float version = 0.2f;
-    private String name = "Latte" + " " + String.valueOf(version);
-
+    private final String name = "Latte" + " " + version;
 
     private final int screenWidth = 1280;
     private final int screenHeight = 720;
 
     private double last_time, delta_time;
-    SceneManager scene_manager = SceneManager.getInstance();
+    EntitySceneManager esm = EntitySceneManager.getInstance();
 
     private void Init() {
-        // Setup an error callback. The default implementation
+        // Set up an error callback. The default implementation
         // will print the error message in System.err.
         GLFWErrorCallback.createPrint(System.err).set();
 
@@ -91,6 +84,7 @@ public class Engine {
             GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
             // Center the window
+            assert vidmode != null;
             glfwSetWindowPos(
                     window,
                     (vidmode.width() - pWidth.get(0)) / 2,
@@ -116,41 +110,44 @@ public class Engine {
     private void Loop() throws GLException {
 
         Renderer<DeferredPipeline> renderer = new Renderer<>(DeferredPipeline::new);
-        scene_manager.setRenderer(renderer);
+        esm.setRenderer(renderer);
 
         ControllableCamera camera = new ControllableCamera(screenWidth, screenHeight);
         camera.setPosition(new Vector3f(0, 0, 3f));
 
-        Scene main = new Scene(camera);
-
+        int m_id, m_id2;
+        Scene main = new Scene(camera) {};
         Material m = Material.fromTexture(new Texture("src/main/resources/brick.jpg"));
         Mesh mesh = Mesh.cube();
         mesh.AddMaterial(m);
-        Model model = Model.fromMesh(mesh);
-        main.addModel(model);
+        m_id = esm.createEntity(Model.fromMesh(mesh));
 
         m = Material.fromTexture(new Texture("src/main/resources/brick.jpg"));
         mesh = Mesh.cube();
         mesh.AddMaterial(m);
-        Model model2 = Model.fromMesh(mesh);
-        main.addModel(model2);
+        m_id2 = esm.createEntity( Model.fromMesh(mesh));
+
 
         for (int i = 0; i < 10; i++) {
             int s = 3;
             Random rand = new Random();
 
-            Float x = (float) rand.nextInt(s);
-            Float y = (float) rand.nextInt(s);
-            Float z = (float) rand.nextInt(s);
+            float x = (float) rand.nextInt(s);
+            float y = (float) rand.nextInt(s);
+            float z = (float) rand.nextInt(s);
 
-            Float colorx = rand.nextFloat();
-            Float colory = rand.nextFloat();
-            Float colorz = rand.nextFloat();
+            float colorx = rand.nextFloat();
+            float colory = rand.nextFloat();
+            float colorz = rand.nextFloat();
 
-            model2.getModelMatrix().translate(new Vector3f(x, y, z));
-            main.addLight(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 5f, 3f));
+
+            esm.getComponent(m_id, Model.class).getModelMatrix().translate(new Vector3f(x, y, z));
+            esm.createEntity(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 5f, 3f));
+
         }
-        scene_manager.AddScene(main, "main");
+
+
+        esm.AddScene(main, "main");
 
 
 
@@ -167,7 +164,7 @@ public class Engine {
             onKeyPress();
 
             calculateDT();
-            scene_manager.Execute(delta_time, glfwGetTime());
+            esm.Execute(delta_time, glfwGetTime());
 
 
 
@@ -212,26 +209,26 @@ public class Engine {
     }
 
     public void onKeyPress() {
-        if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_TRUE) {
-
-            Scene main = SceneManager.getInstance().GetScene("main");
-
-            for (int i = 0; i < 10; i++) {
-                int s = 3;
-                Random rand = new Random();
-
-                Float x = (float) rand.nextInt(s);
-                Float y = (float) rand.nextInt(s);
-                Float z = (float) rand.nextInt(s);
-
-                Float colorx = rand.nextFloat();
-                Float colory = rand.nextFloat();
-                Float colorz = rand.nextFloat();
-
-                main.getModels().get(1).setModelMatrix(new Matrix4f().identity().translate(new Vector3f(x, y, z)));
-                main.getLights().get(i).position = new Vector3f(x, y, z);
-            }
-        }
+//        if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_TRUE) {
+//
+//            Scene main = EntitySceneManager.getInstance().GetScene("main");
+//
+//            for (int i = 0; i < 10; i++) {
+//                int s = 3;
+//                Random rand = new Random();
+//
+//                Float x = (float) rand.nextInt(s);
+//                Float y = (float) rand.nextInt(s);
+//                Float z = (float) rand.nextInt(s);
+//
+//                Float colorx = rand.nextFloat();
+//                Float colory = rand.nextFloat();
+//                Float colorz = rand.nextFloat();
+//
+//                main.getModels().get(1).setModelMatrix(new Matrix4f().identity().translate(new Vector3f(x, y, z)));
+//                main.getLights().get(i).position = new Vector3f(x, y, z);
+//            }
+//        }
 
     }
 

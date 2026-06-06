@@ -3,6 +3,8 @@ package redegs.engine.graphics.passes;
 import org.lwjgl.system.MemoryStack;
 import redegs.engine.graphics.*;
 import redegs.engine.graphics.buffers.UniformBuffer;
+import redegs.engine.graphics.system.RenderContext;
+import redegs.engine.graphics.system.RenderPass;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;

@@ -4,8 +4,9 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
 import redegs.engine.graphics.*;
-import redegs.engine.graphics.buffers.FrameBuffer;
 import redegs.engine.graphics.buffers.UniformBuffer;
+import redegs.engine.graphics.system.RenderContext;
+import redegs.engine.graphics.system.RenderPass;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;

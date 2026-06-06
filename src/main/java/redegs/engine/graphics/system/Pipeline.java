@@ -1,13 +1,12 @@
-package redegs.engine.graphics;
+package redegs.engine.graphics.system;
 
-import org.joml.Matrix4f;
 import redegs.Engine;
-import redegs.engine.engine.Camera;
+import redegs.engine.graphics.Camera;
+import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.PointLightSource;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class Pipeline {

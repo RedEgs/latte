@@ -1,7 +1,7 @@
 package redegs.engine.graphics.pipelines;
 
 import redegs.Engine;
-import redegs.engine.graphics.Pipeline;
+import redegs.engine.graphics.system.Pipeline;
 import redegs.engine.graphics.Texture;
 import redegs.engine.graphics.buffers.FrameBuffer;
 import redegs.engine.graphics.passes.GeometryPass;

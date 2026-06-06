@@ -1,5 +1,7 @@
-package redegs.engine.graphics;
+package redegs.engine.graphics.system;
 
+import redegs.engine.graphics.Model;
+import redegs.engine.graphics.Shader;
 import redegs.engine.graphics.lights.PointLightSource;
 
 import static org.lwjgl.opengl.GL11.*;

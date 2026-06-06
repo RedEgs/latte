@@ -1,4 +1,4 @@
-package redegs.engine.engine;
+package redegs.engine.graphics;
 
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;

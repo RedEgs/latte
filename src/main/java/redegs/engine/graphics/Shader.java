@@ -434,15 +434,20 @@ public class Shader {
         
     in vec2 TexCoords;
     
+    struct PointLight {
+        vec3 position;
+        vec3 color;
+        float intensity;
+        float radius;  
+    };
+    
     uniform sampler2D gPosition;
     uniform sampler2D gNormal;
     uniform sampler2D gAlbedoSpec;
     uniform vec3 viewPos;
     
-    // Light properties (example with one light)
-    uniform vec3 lightPos;
-    uniform vec3 lightColor;
-    uniform float ambientStrength;
+    uniform int light_count;
+    uniform PointLight lights[10];
     
     void main() {
         // Sample G-buffer textures
@@ -451,24 +456,16 @@ public class Shader {
         vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
         float Specular = texture(gAlbedoSpec, TexCoords).a;
         
-        // Ambient lighting
-        vec3 ambient = ambientStrength * Albedo;
-        
-        // Diffuse lighting
-        vec3 norm = normalize(Normal);
-        vec3 lightDir = normalize(lightPos - FragPos);
-        float diff = max(dot(norm, lightDir), 0.0);
-        vec3 diffuse = diff * lightColor * Albedo;
-        
-        // Specular lighting
+        vec3 lighting = Albedo * 0.1;
         vec3 viewDir = normalize(viewPos - FragPos);
-        vec3 reflectDir = reflect(-lightDir, norm);
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-        vec3 specular = spec * lightColor * Specular;
         
-        // Combine results
-        vec3 result = ambient + diffuse + specular;
-        FragColor = vec4(result, 1.0);
+        for (int i = 0; i < light_count; i++) {
+            vec3 lightDir = normalize(lights[i].position - FragPos);
+            vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Albedo * lights[i].color;
+            lighting += diffuse;
+        }
+        
+        FragColor = vec4(lighting, 1.0);
     }
     """;
 

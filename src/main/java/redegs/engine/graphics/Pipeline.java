@@ -3,6 +3,7 @@ package redegs.engine.graphics;
 import org.joml.Matrix4f;
 import redegs.Engine;
 import redegs.engine.engine.Camera;
+import redegs.engine.graphics.lights.PointLightSource;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ public class Pipeline {
 
         render_context.camera = new Camera(render_context.width, render_context.height);
         render_context.models = new ArrayList<Model>();
+        render_context.lights = new ArrayList<PointLightSource>();
     }
 
     public void Execute() {

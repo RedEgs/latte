@@ -39,6 +39,7 @@ public class LightingPass  extends RenderPass {
         render_context.gbuffer.getColorTexture(0).use(0, shader, "gPosition");
         render_context.gbuffer.getColorTexture(1).use(1, shader, "gNormal");
         render_context.gbuffer.getColorTexture(2).use(2, shader, "gAlbedoSpec");
+        UploadLights(render_context, shader);
 
         quad.Draw(shader);
     }

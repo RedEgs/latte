@@ -12,6 +12,7 @@ import redegs.engine.engine.ControllableCamera;
 import redegs.engine.engine.Scene;
 import redegs.engine.engine.SceneManager;
 import redegs.engine.graphics.*;
+import redegs.engine.graphics.lights.PointLightSource;
 import redegs.engine.graphics.pipelines.DeferredPipeline;
 import redegs.engine.util.GLException;
 
@@ -117,12 +118,22 @@ public class Engine {
 
         Scene main = new Scene(camera);
 
-        Material m = Material.fromTexture(new Texture("F:/Programming/Java/Engine/Latte/src/main/resources/brick.jpg"));
+        Material m = Material.fromTexture(new Texture("src/main/resources/brick.jpg"));
         Mesh mesh = Mesh.cube();
         mesh.AddMaterial(m);
         Model model = Model.fromMesh(mesh);
         main.addModel(model);
+        for (int i = 0; i < 10; i++) {
+            Float x = (float) (Math.random() * 10);
+            Float y = (float) (Math.random() * 10);
+            Float z = (float) (Math.random() * 10);
 
+            Float colorx = (float) Math.random() * 1;
+            Float colory = (float) Math.random() * 1;
+            Float colorz = (float) Math.random() * 1;
+
+            main.addLight(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 10f, 10f));
+        }
         scene_manager.AddScene(main, "main");
 
 
@@ -139,6 +150,7 @@ public class Engine {
 
             calculateDT();
             scene_manager.Execute(delta_time, glfwGetTime());
+            //System.out.println(main.getLights().size());
 
             glCheckError();
             glfwSwapBuffers(window); // swap the color buffers

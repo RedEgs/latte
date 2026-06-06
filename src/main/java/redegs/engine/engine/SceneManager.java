@@ -2,6 +2,7 @@ package redegs.engine.engine;
 
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.Renderer;
+import redegs.engine.graphics.lights.PointLightSource;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +40,12 @@ public final class SceneManager {
             current_renderer.SubmitModels(diff);
         }
 
+        if (current_renderer.getLights().equals(current_scene.getLights())) {
+            List<PointLightSource> diff = new ArrayList<>(current_scene.getLights());
+            diff.removeAll(current_renderer.getLights());
+            current_renderer.SubmitLights(diff);
+        }
+
 
         current_scene.Update(delta_time, elapsed_time);
         current_renderer.setCamera(current_scene.getCamera());
@@ -64,12 +71,14 @@ public final class SceneManager {
     private void SetScene(Scene scene, String name) {
         if (scene != this.current_scene) {
             current_renderer.ClearModels();
+            current_renderer.ClearLights();
         }
 
         this.current_scene = scene;
         this.current_scene_name = name;
 
         current_renderer.SubmitModels(current_scene.getModels());
+        current_renderer.SubmitLights(current_scene.getLights());
     }
 
     public Scene GetScene(String name) {

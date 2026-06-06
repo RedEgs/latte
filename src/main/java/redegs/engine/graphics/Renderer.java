@@ -1,6 +1,7 @@
 package redegs.engine.graphics;
 
 import redegs.engine.engine.Camera;
+import redegs.engine.graphics.lights.PointLightSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +68,19 @@ public class Renderer<T extends Pipeline> {
     }
     public List<Model> getModels() {
         return pipeline.getRenderContext().models;
+    }
+
+    public void SubmitLight(PointLightSource light) {
+        pipeline.getRenderContext().lights.add(light);
+    }
+    public void SubmitLights(List<PointLightSource> lights) {
+        pipeline.getRenderContext().lights.addAll(lights);
+    }
+    public void ClearLights() {
+        pipeline.getRenderContext().lights.clear();
+    }
+    public List<PointLightSource> getLights() {
+        return pipeline.getRenderContext().lights;
     }
 
     public <T extends Camera> void setCamera(T camera) {

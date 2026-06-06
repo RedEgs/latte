@@ -34,18 +34,11 @@ public final class SceneManager {
     }
 
     private void UpdateScene(double delta_time, double elapsed_time) {
-        if (current_renderer.getModels().equals(current_scene.getModels())) {
-            List<Model> diff = new ArrayList<>(current_scene.getModels());
-            diff.removeAll(current_renderer.getModels());
-            current_renderer.SubmitModels(diff);
-        }
+        getRenderer().ClearModels();
+        getRenderer().ClearLights();
 
-        if (current_renderer.getLights().equals(current_scene.getLights())) {
-            List<PointLightSource> diff = new ArrayList<>(current_scene.getLights());
-            diff.removeAll(current_renderer.getLights());
-            current_renderer.SubmitLights(diff);
-        }
-
+        getRenderer().SubmitLights(current_scene.getLights());
+        getRenderer().SubmitModels(current_scene.getModels());
 
         current_scene.Update(delta_time, elapsed_time);
         current_renderer.setCamera(current_scene.getCamera());

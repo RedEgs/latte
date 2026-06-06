@@ -1,6 +1,7 @@
 package redegs.engine.graphics.buffers;
 
 import org.lwjgl.BufferUtils;
+import redegs.Engine;
 import redegs.engine.graphics.Texture;
 
 import java.nio.IntBuffer;
@@ -85,6 +86,17 @@ public class FrameBuffer {
         }
         buffers.flip();
         glDrawBuffers(buffers);
+        unbind();
+    }
+    public void blitToDefaultFramebuffer() {
+        bind();
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, id);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
+        glBlitFramebuffer(
+                0, 0, Engine.getScreenWidth(), Engine.getScreenHeight(), 0, 0, Engine.getScreenWidth(), Engine.getScreenHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
+        );
+
         unbind();
     }
 

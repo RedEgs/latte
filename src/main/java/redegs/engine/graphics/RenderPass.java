@@ -24,6 +24,8 @@ public class RenderPass {
 
             shader.setUniform3f(name + ".position" , light.position);
             shader.setUniform3f(name + ".color", light.color);
+            shader.setUniform1f(name + ".radius", light.radius);
+            shader.setUniform1f(name + ".intensity", light.intensity);
         }
     }
 

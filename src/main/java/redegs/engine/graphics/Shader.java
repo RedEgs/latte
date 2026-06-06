@@ -459,12 +459,38 @@ public class Shader {
         vec3 lighting = Albedo * 0.1;
         vec3 viewDir = normalize(viewPos - FragPos);
         
-        for (int i = 0; i < light_count; i++) {
-            vec3 lightDir = normalize(lights[i].position - FragPos);
-            vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Albedo * lights[i].color;
-            lighting += diffuse;
-        }
+         for (int i = 0; i < light_count; i++) {
+                
+            float distance = length(lights[i].position - FragPos);
         
+             if (distance >= lights[i].radius)
+                 continue;
+        
+             vec3 lightDir = normalize(lights[i].position - FragPos);
+        
+             float attenuation = 1.0 - (distance / lights[i].radius);
+             attenuation *= attenuation;
+        
+             vec3 diffuse =
+                 max(dot(Normal, lightDir), 0.0)
+                 * Albedo
+                 * lights[i].color;
+        
+             vec3 halfwayDir = normalize(lightDir + viewDir);
+        
+             float spec =
+                 pow(max(dot(Normal, halfwayDir), 0.0), 16.0);
+        
+             vec3 specular =
+                 lights[i].color
+                 * spec
+                 * Specular;
+        
+             lighting +=
+                 (diffuse + specular)
+                 * lights[i].intensity
+                 * attenuation;
+        }
         FragColor = vec4(lighting, 1.0);
     }
     """;

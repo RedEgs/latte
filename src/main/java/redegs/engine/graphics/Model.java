@@ -39,5 +39,5 @@ public class Model {
     public Matrix4f getModelMatrix() {
         return this.model_matrix;
     }
-
+    public void setModelMatrix(Matrix4f matrix) {this.model_matrix = matrix;}
 }

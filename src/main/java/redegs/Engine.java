@@ -1,6 +1,7 @@
 package redegs;
 
 import org.joml.Matrix4f;
+import org.joml.Random;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.lwjgl.BufferUtils;
@@ -21,6 +22,7 @@ import java.nio.*;
 import static java.lang.Math.sin;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.ARBFramebufferSRGB.GL_FRAMEBUFFER_SRGB;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL43C.GL_DEBUG_OUTPUT;
@@ -36,8 +38,9 @@ public class Engine {
     private static Engine INSTANCE;
     private static Long window;
 
-    private String name = "Latte";
-    private final Float version = 0.01f;
+    private final Float version = 0.2f;
+    private String name = "Latte" + " " + String.valueOf(version);
+
 
     private final int screenWidth = 1280;
     private final int screenHeight = 720;
@@ -105,6 +108,8 @@ public class Engine {
         glEnable(GL_DEPTH_TEST); // CRITICAL: Enable depth testing!
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glEnable(GL_FRAMEBUFFER_SRGB);
+        glEnable(GL_CULL_FACE);
 
     }
 
@@ -123,16 +128,27 @@ public class Engine {
         mesh.AddMaterial(m);
         Model model = Model.fromMesh(mesh);
         main.addModel(model);
+
+        m = Material.fromTexture(new Texture("src/main/resources/brick.jpg"));
+        mesh = Mesh.cube();
+        mesh.AddMaterial(m);
+        Model model2 = Model.fromMesh(mesh);
+        main.addModel(model2);
+
         for (int i = 0; i < 10; i++) {
-            Float x = (float) (Math.random() * 10);
-            Float y = (float) (Math.random() * 10);
-            Float z = (float) (Math.random() * 10);
+            int s = 3;
+            Random rand = new Random();
 
-            Float colorx = (float) Math.random() * 1;
-            Float colory = (float) Math.random() * 1;
-            Float colorz = (float) Math.random() * 1;
+            Float x = (float) rand.nextInt(s);
+            Float y = (float) rand.nextInt(s);
+            Float z = (float) rand.nextInt(s);
 
-            main.addLight(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 10f, 10f));
+            Float colorx = rand.nextFloat();
+            Float colory = rand.nextFloat();
+            Float colorz = rand.nextFloat();
+
+            model2.getModelMatrix().translate(new Vector3f(x, y, z));
+            main.addLight(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 5f, 3f));
         }
         scene_manager.AddScene(main, "main");
 
@@ -148,8 +164,15 @@ public class Engine {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
             glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
 
+            onKeyPress();
+
             calculateDT();
             scene_manager.Execute(delta_time, glfwGetTime());
+
+
+
+
+
             //System.out.println(main.getLights().size());
 
             glCheckError();
@@ -188,6 +211,29 @@ public class Engine {
         Engine.getInstance().Run();
     }
 
+    public void onKeyPress() {
+        if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_TRUE) {
+
+            Scene main = SceneManager.getInstance().GetScene("main");
+
+            for (int i = 0; i < 10; i++) {
+                int s = 3;
+                Random rand = new Random();
+
+                Float x = (float) rand.nextInt(s);
+                Float y = (float) rand.nextInt(s);
+                Float z = (float) rand.nextInt(s);
+
+                Float colorx = rand.nextFloat();
+                Float colory = rand.nextFloat();
+                Float colorz = rand.nextFloat();
+
+                main.getModels().get(1).setModelMatrix(new Matrix4f().identity().translate(new Vector3f(x, y, z)));
+                main.getLights().get(i).position = new Vector3f(x, y, z);
+            }
+        }
+
+    }
 
     public static int getScreenWidth() {
         return getInstance().screenWidth;

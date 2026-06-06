@@ -42,6 +42,9 @@ public class LightingPass  extends RenderPass {
         UploadLights(render_context, shader);
 
         quad.Draw(shader);
+
+        render_context.gbuffer.blitToDefaultFramebuffer();
+
     }
 
     private void updateCameraUniformBuffer(RenderContext render_context) {

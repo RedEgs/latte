@@ -6,7 +6,7 @@ import redegs.engine.graphics.lights.PointLightSource;
 import java.util.ArrayList;
 
 public class LightSource {
-    public final Vector3f position;
+    public Vector3f position;
     public final Vector3f color;
     public final float intensity;
 

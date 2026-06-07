@@ -17,16 +17,16 @@ public class DeferredPipeline extends Pipeline {
         int height = Engine.getScreenHeight();
 
         gbuffer = new FrameBuffer(width, height);
-        gbuffer.addColorAttachment(new Texture(width, height, Texture.TextureType.POSITION));
-        gbuffer.addColorAttachment(new Texture(width, height, Texture.TextureType.NORMALS));
-        gbuffer.addColorAttachment(new Texture(width, height, Texture.TextureType.COLOR));
-        gbuffer.addColorAttachment(new Texture(width, height, Texture.TextureType.COLOR));
-        gbuffer.setDepthAttachment(new Texture(width, height, Texture.TextureType.DEPTH));
+        gbuffer.addColorAttachment(new Texture(width, height, Texture.AttachmentType.POSITION));
+        gbuffer.addColorAttachment(new Texture(width, height, Texture.AttachmentType.NORMALS));
+        gbuffer.addColorAttachment(new Texture(width, height, Texture.AttachmentType.COLOR));
+        gbuffer.addColorAttachment(new Texture(width, height, Texture.AttachmentType.COLOR));
+        gbuffer.setDepthAttachment(new Texture(width, height, Texture.AttachmentType.DEPTH));
         gbuffer.completeAttachments();
         gbuffer.validate();
 
         shadowmap = new FrameBuffer(1024, 1024);
-        shadowmap.setDepthAttachment(new Texture(1024, 1024, Texture.TextureType.DEPTH));
+        shadowmap.setDepthAttachment(new Texture(1024, 1024, Texture.AttachmentType.DEPTH));
         shadowmap.completeAttachments();
         shadowmap.validate();
 

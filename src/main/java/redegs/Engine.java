@@ -9,6 +9,7 @@ import org.lwjgl.system.MemoryStack;
 import redegs.engine.engine.entities.ControllableCamera;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.Scene;
+import redegs.engine.graphics.MeshPrimitives;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
@@ -124,8 +125,11 @@ public class Engine {
         //m.getTransform().position.set(0, 0, 0);
 
         m_id = esm.createEntity(m);
-        esm.createEntity(new DirectionalLightSource(new Vector3f(0, -10, 3), new Vector3f(.1f), new Vector3f(0f), new Vector3f(1f, 1f, 1f)));
-
+        esm.createEntity(new DirectionalLightSource(new Vector3f(0, -10, 0), new Vector3f(.05f), new Vector3f(.5f), new Vector3f(.3f)));
+//
+        Model xm = Model.fromMesh(MeshPrimitives.cube());
+        xm.getTransform().model_matrix.translate(0, -1, 0);
+        esm.createEntity(xm);
 
         for (int i = 0; i < 10; i++) {
             int s = 3;

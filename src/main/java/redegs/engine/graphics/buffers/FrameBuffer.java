@@ -19,6 +19,7 @@ public class FrameBuffer {
     private Texture depth_texture;
 
     private boolean locked = false;
+    private boolean depthOnly = false;
 
     public FrameBuffer(int width, int height) {
         id = glGenFramebuffers();
@@ -32,6 +33,10 @@ public class FrameBuffer {
     public void bind() {
         glBindFramebuffer(GL_FRAMEBUFFER, id);
         glViewport(0, 0, width, height);
+        if (depthOnly) {
+            glDrawBuffer(GL_NONE);
+            glReadBuffer(GL_NONE);
+        }
     }
     public void unbind() {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -79,13 +84,21 @@ public class FrameBuffer {
     }
     public void completeAttachments() {
         bind();
-        IntBuffer buffers = BufferUtils.createIntBuffer(attachments.size());
-        for (int i = 0; i < attachments.size(); i++) {
-            buffers.put(GL_COLOR_ATTACHMENT0 + i);
-            System.err.println(i);
+
+        if (attachments.size() < 1 && depth_texture != null) {
+            depthOnly = true;
+            glDrawBuffer(GL_NONE);
+            glReadBuffer(GL_NONE);
+        } else {
+            IntBuffer buffers = BufferUtils.createIntBuffer(attachments.size());
+            for (int i = 0; i < attachments.size(); i++) {
+                buffers.put(GL_COLOR_ATTACHMENT0 + i);
+                System.err.println(i);
+            }
+            buffers.flip();
+            glDrawBuffers(buffers);
         }
-        buffers.flip();
-        glDrawBuffers(buffers);
+
         unbind();
     }
     public void blitToDefaultFramebuffer() {

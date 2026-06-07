@@ -3,8 +3,10 @@ package redegs.engine.graphics.passes;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
-import redegs.engine.graphics.*;
+import redegs.engine.graphics.Model;
+import redegs.engine.graphics.Shader;
 import redegs.engine.graphics.buffers.UniformBuffer;
+import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.system.RenderContext;
 import redegs.engine.graphics.system.RenderPass;
 
@@ -15,6 +17,8 @@ import static org.lwjgl.opengl.GL11C.*;
 
 public class GeometryPass extends RenderPass {
     Shader shader = new Shader(Shader.FragmentShader_geometry, Shader.VertexShader_geometry);
+
+
     UniformBuffer ubo;
 
     public GeometryPass(RenderContext render_context) {
@@ -37,11 +41,12 @@ public class GeometryPass extends RenderPass {
 
         shader.use();
         shader.setUniform3f("view_pos", render_context.camera.getPosition());
-
+        shader.setUniformMat4("lightSpaceMatrix", DirectionalLightSource.calculateLightSpaceMatrix(render_context.dir_light.direction, DirectionalLightSource.getLightMatrix()));
         DrawGeometry(render_context, shader);
 
-
         render_context.gbuffer.unbind();
+
+
     }
 
     @Override

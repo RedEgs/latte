@@ -105,11 +105,6 @@ public class Vertex {
 
         // Print final buffer
 
-        for (int i = 0; i < buffer.capacity(); i++) {
-            System.out.print(buffer.get(i) + " ");
-            if ((i + 1) % 8 == 0) System.out.println();
-        }
-
         buffer.rewind();
         return buffer;
     }

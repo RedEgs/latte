@@ -22,4 +22,5 @@ public class RenderContext {
     public DirectionalLightSource dir_light;
 
     public FrameBuffer gbuffer;
+    public FrameBuffer shadowmap;
 }

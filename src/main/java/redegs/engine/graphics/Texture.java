@@ -1,11 +1,5 @@
 package redegs.engine.graphics;
 
-import redegs.Engine;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL11C.*;
@@ -100,19 +94,14 @@ public class Texture {
         glBindTexture(GL_TEXTURE_2D, id);
 
         if (this.type == TextureType.DEPTH) {
-            glTexImage2D(
-                    GL_TEXTURE_2D,
-                    0,
-                    GL_DEPTH_COMPONENT24,
-                    width,
-                    height,
-                    0,
-                    GL_DEPTH_COMPONENT,
-                    GL_FLOAT,
-                    (ByteBuffer) null
-            );
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24,
+                    width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (ByteBuffer) null);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+            float[] border = {1.0f, 1.0f, 1.0f, 1.0f};
+            glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
         }
         else if (this.type == TextureType.POSITION || this.type == TextureType.NORMALS) {
             // FIXED: Use GL_RGBA16F as internal format, GL_RGBA as format, GL_FLOAT as type

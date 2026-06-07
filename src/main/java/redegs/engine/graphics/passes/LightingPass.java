@@ -1,6 +1,7 @@
 package redegs.engine.graphics.passes;
 
 import org.lwjgl.system.MemoryStack;
+import redegs.Engine;
 import redegs.engine.graphics.Mesh;
 import redegs.engine.graphics.MeshPrimitives;
 import redegs.engine.graphics.Shader;
@@ -33,6 +34,7 @@ public class LightingPass  extends RenderPass {
         super.Execute(render_context);
 
         // Clear the default framebuffer (screen)
+        glViewport(0, 0, Engine.getScreenWidth(), Engine.getScreenHeight());
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -42,6 +44,8 @@ public class LightingPass  extends RenderPass {
         render_context.gbuffer.getColorTexture(0).use(0, shader, "gPosition");
         render_context.gbuffer.getColorTexture(1).use(1, shader, "gNormal");
         render_context.gbuffer.getColorTexture(2).use(2, shader, "gAlbedoSpec");
+        render_context.gbuffer.getColorTexture(3).use(3, shader, "gFragPosLightSpace");
+        render_context.shadowmap.getDepthTexture().use(4, shader, "gShadowmap");
         UploadLights(render_context, shader);
 
         quad.Draw(shader);

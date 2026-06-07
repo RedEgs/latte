@@ -351,6 +351,7 @@ public class Shader {
     out vec3 FragPos;
     out vec2 TexCoords;
     out vec3 Normal;
+            out vec4 FragPosLightSpace;
                
     layout (std140) uniform CameraInfo {
         mat4 proj;
@@ -359,6 +360,7 @@ public class Shader {
     
     uniform mat4 model;
     uniform mat3 normalMatrix;
+            uniform mat4 lightSpaceMatrix;
     
     void main()
     {
@@ -367,6 +369,7 @@ public class Shader {
         FragPos = worldPos.xyz;
         TexCoords = aUV;
         Normal = normalize(normalMatrix * aNormal);
+                FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
         
         gl_Position = proj * view * worldPos;     
     }
@@ -377,10 +380,12 @@ public class Shader {
     layout (location = 0) out vec3 gPosition;
     layout (location = 1) out vec3 gNormal;
     layout (location = 2) out vec4 gAlbedoSpec;
+            layout (location = 3) out vec4 gShadowmap;
        
     in vec2 TexCoords;
     in vec3 FragPos;
     in vec3 Normal;
+            in vec4 FragPosLightSpace;
     
     layout (std140) uniform CameraInfo {
         mat4 proj;
@@ -406,6 +411,7 @@ public class Shader {
         gNormal   = normalize(Normal);               // world-space normal
         gAlbedoSpec.rgb = texture(material.diffuse, TexCoords).rgb;  // diffuse color
         gAlbedoSpec.a   = texture(material.specular, TexCoords).r;   // specular intensity
+                gShadowmap = FragPosLightSpace;
         
     }
     """;
@@ -428,88 +434,128 @@ public class Shader {
     """;
 
     public static String FragmentShader_lighting = """
-    #version 330 core
-    out vec4 FragColor;
-        
-    in vec2 TexCoords;
-    
-    struct PointLight {
-        vec3 position;
-        vec3 color;
-        float intensity;
-        float radius;  
-    };
-            struct DirectionalLight {
-                vec3 direction;
-                vec3 ambient;
-                vec3 diffuse;
-                vec3 specular;
-            };
-    
-    uniform sampler2D gPosition;
-    uniform sampler2D gNormal;
-    uniform sampler2D gAlbedoSpec;
-    uniform vec3 viewPos;
-    
-    uniform int light_count;
-    uniform PointLight lights[10];
-            uniform DirectionalLight dir_light;
-    
-    void main() {
-        // Sample G-buffer textures
-        vec3 FragPos = texture(gPosition, TexCoords).rgb;
-        vec3 Normal = texture(gNormal, TexCoords).rgb;
-        vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
-        float Specular = texture(gAlbedoSpec, TexCoords).a;
-        
-        vec3 lighting = Albedo * 0.1;
-        vec3 viewDir = normalize(viewPos - FragPos);
-        
-                vec3 lightDir = normalize(-dir_light.direction);
-                float diff = max(dot(Normal, lightDir), 0.0);
+                    #version 330 core
+                       out vec4 FragColor;
             
-                vec3 reflectDir = reflect(-lightDir, Normal);
-                float spec = pow(max(dot(viewDir, reflectDir), 0.0), Specular);
-                vec3 ambient = dir_light.ambient * Albedo;
-                vec3 diffuse = dir_light.diffuse * diff * Albedo;
-                vec3 specular = dir_light.specular * spec * Albedo;
+                       in vec2 TexCoords;
             
-                lighting += (ambient + diffuse + specular);
+                       struct PointLight {
+                           vec3 position;
+                           vec3 color;
+                           float intensity;
+                           float radius;
+                       };
             
-         for (int i = 0; i < light_count; i++) {
-                
-            float distance = length(lights[i].position - FragPos);
-        
-             if (distance >= lights[i].radius)
-                 continue;
-        
-             vec3 lightDir = normalize(lights[i].position - FragPos);
-        
-             float attenuation = 1.0 - (distance / lights[i].radius);
-             attenuation *= attenuation;
-        
-             vec3 diffuse =
-                 max(dot(Normal, lightDir), 0.0)
-                 * Albedo
-                 * lights[i].color;
-        
-             vec3 halfwayDir = normalize(lightDir + viewDir);
-        
-             float spec =
-                 pow(max(dot(Normal, halfwayDir), 0.0), 16.0);
-        
-             vec3 specular =
-                 lights[i].color
-                 * spec
-                 * Specular;
-        
-             lighting +=
-                 (diffuse + specular)
-                 * lights[i].intensity
-                 * attenuation;
-        }
-        FragColor = vec4(lighting, 1.0);
-    }
+                       struct DirectionalLight {
+                           vec3 direction;
+                           vec3 ambient;
+                           vec3 diffuse;
+                           vec3 specular;
+                       };
+            
+                       uniform sampler2D gPosition;
+                       uniform sampler2D gNormal;
+                       uniform sampler2D gAlbedoSpec;
+                       uniform sampler2D gFragPosLightSpace;
+                       uniform sampler2D gShadowmap;
+            
+                       uniform vec3 viewPos;
+                       uniform int light_count;
+                       uniform PointLight lights[10];
+                       uniform DirectionalLight dir_light;
+            
+                       float calcShadow(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir) {
+                           vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+                           projCoords = projCoords * 0.5 + 0.5;
+            
+                           // Outside far plane = no shadow
+                           if (projCoords.z > 1.0) return 0.0;
+            
+                           float currentDepth = projCoords.z;
+                           float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+            
+                           // PCF
+                           float shadow = 0.0;
+                           vec2 texelSize = 1.0 / textureSize(gShadowmap, 0);
+                           for (int x = -1; x <= 1; x++) {
+                               for (int y = -1; y <= 1; y++) {
+                                   float pcfDepth = texture(gShadowmap, projCoords.xy + vec2(x, y) * texelSize).r;
+                                   shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+                               }
+                           }
+                           return shadow / 9.0;
+                       }
+            
+                       void main() {
+                           // Sample G-buffer
+                           vec3 FragPos        = texture(gPosition,    TexCoords).rgb;
+                           vec3 Normal         = normalize(texture(gNormal, TexCoords).rgb);
+                           vec3 Albedo         = texture(gAlbedoSpec,  TexCoords).rgb;
+                           float Specular      = texture(gAlbedoSpec,  TexCoords).a;
+                           vec4 FragPosLightSpace = texture(gFragPosLightSpace, TexCoords);
+            
+                           vec3 viewDir  = normalize(viewPos - FragPos);
+                           vec3 lightDir = normalize(-dir_light.direction);
+            
+                           // Directional light
+                           float diff = max(dot(Normal, lightDir), 0.0);
+            
+                           // Use material shininess — guard against 0 to avoid undefined pow()
+                           float shininess = max(Specular * 256.0, 1.0);
+                           vec3 halfwayDir = normalize(lightDir + viewDir);
+                           float spec = pow(max(dot(Normal, halfwayDir), 0.0), shininess);
+            
+                           vec3 ambient  = dir_light.ambient  * Albedo;
+                           vec3 diffuse  = dir_light.diffuse  * diff * Albedo;
+                           vec3 specular = dir_light.specular * spec * Albedo;
+            
+                           float shadow = calcShadow(FragPosLightSpace, Normal, lightDir);
+                           vec3 lighting = ambient + (1.0 - shadow) * (diffuse + specular);
+            
+                           // Point lights
+                           for (int i = 0; i < light_count; i++) {
+                               float distance = length(lights[i].position - FragPos);
+                               if (distance >= lights[i].radius) continue;
+            
+                               vec3 pointLightDir = normalize(lights[i].position - FragPos);
+                               vec3 pointHalfway  = normalize(pointLightDir + viewDir);
+            
+                               float attenuation = 1.0 - (distance / lights[i].radius);
+                               attenuation *= attenuation;
+            
+                               vec3 pointDiffuse  = max(dot(Normal, pointLightDir), 0.0) * Albedo * lights[i].color;
+                               float pointSpec    = pow(max(dot(Normal, pointHalfway), 0.0), 16.0);
+                               vec3 pointSpecular = lights[i].color * pointSpec * Specular;
+            
+                               lighting += (pointDiffuse + pointSpecular) * lights[i].intensity * attenuation;
+                           }
+            
+                           FragColor = vec4(lighting, 1.0);
+                       }
     """;
+
+    public static String VertexShader_shadowDepth = """
+                #version 330 core
+                layout (location = 0) in vec3 aPos;
+            
+                uniform mat4 lightSpaceMatrix;
+                uniform mat4 model;
+            
+                void main()
+                {
+                    gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);
+                }
+            """;
+
+    public static String FragmentShader_shadowDepth = """
+                #version 330 core
+            
+                void main()
+                {
+            
+                }
+            """;
+
+
 
 }

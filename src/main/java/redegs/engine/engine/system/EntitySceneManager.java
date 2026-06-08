@@ -1,5 +1,6 @@
 package redegs.engine.engine.system;
 
+import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
@@ -78,6 +79,7 @@ public final class EntitySceneManager {
         current_renderer.ClearModels();
         current_renderer.ClearLights();
         current_renderer.SubmitDirectionalLight(getStore(DirectionalLightSource.class).toList().get(0));
+        current_renderer.SubmitSkybox(getStore(Cubemap.class).toList().get(0));
 
         current_renderer.SubmitLights(getStore(PointLightSource.class).toList());
         current_renderer.SubmitModels(getStore(Model.class).toList());
@@ -114,6 +116,7 @@ public final class EntitySceneManager {
 
         current_renderer.SubmitLights(getStore(PointLightSource.class).toList());
         current_renderer.SubmitModels(getStore(Model.class).toList());
+
     }
 
     public Scene GetScene(String name) {

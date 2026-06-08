@@ -108,4 +108,8 @@ public class Camera {
         this.view.get3x3(normalMatrix);
         return normalMatrix.invert().transpose();
     }
+
+    public Matrix4f getStaticViewMatrix() {
+        return new Matrix4f(new Matrix3f(view));
+    }
 }

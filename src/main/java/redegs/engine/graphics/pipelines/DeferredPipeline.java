@@ -6,6 +6,7 @@ import redegs.engine.graphics.buffers.FrameBuffer;
 import redegs.engine.graphics.passes.GeometryPass;
 import redegs.engine.graphics.passes.LightingPass;
 import redegs.engine.graphics.passes.ShadowPass;
+import redegs.engine.graphics.passes.SkyboxPass;
 import redegs.engine.graphics.system.Pipeline;
 
 public class DeferredPipeline extends Pipeline {
@@ -33,9 +34,11 @@ public class DeferredPipeline extends Pipeline {
         getRenderContext().gbuffer = gbuffer;
         getRenderContext().shadowmap = shadowmap;
 
+
         NewPass(GeometryPass.class);
         NewPass(ShadowPass.class);
         NewPass(LightingPass.class);
+        NewPass(SkyboxPass.class);
 
     }
 //

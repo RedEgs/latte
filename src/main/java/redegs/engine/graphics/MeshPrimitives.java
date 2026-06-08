@@ -9,6 +9,61 @@ import java.util.List;
 import static redegs.engine.graphics.Vertex.createVertex;
 
 public class MeshPrimitives {
+    public static Mesh skyboxCube() {
+        List<Vertex> vertices = new ArrayList<>();
+
+        // Front
+        vertices.add(createVertex(-0.5f, -0.5f,  0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex( 0.5f, -0.5f,  0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex( 0.5f,  0.5f,  0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex(-0.5f,  0.5f,  0.5f, 0, 0, 0, 0, 0));
+
+        // Back
+        vertices.add(createVertex( 0.5f, -0.5f, -0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex(-0.5f, -0.5f, -0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex(-0.5f,  0.5f, -0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex( 0.5f,  0.5f, -0.5f, 0, 0, 0, 0, 0));
+
+        // Top
+        vertices.add(createVertex(-0.5f,  0.5f,  0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex( 0.5f,  0.5f,  0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex( 0.5f,  0.5f, -0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex(-0.5f,  0.5f, -0.5f, 0, 0, 0, 0, 0));
+
+        // Bottom
+        vertices.add(createVertex(-0.5f, -0.5f, -0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex( 0.5f, -0.5f, -0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex( 0.5f, -0.5f,  0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex(-0.5f, -0.5f,  0.5f, 0, 0, 0, 0, 0));
+
+        // Right
+        vertices.add(createVertex( 0.5f, -0.5f,  0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex( 0.5f, -0.5f, -0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex( 0.5f,  0.5f, -0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex( 0.5f,  0.5f,  0.5f, 0, 0, 0, 0, 0));
+
+        // Left
+        vertices.add(createVertex(-0.5f, -0.5f, -0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex(-0.5f, -0.5f,  0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex(-0.5f,  0.5f,  0.5f, 0, 0, 0, 0, 0));
+        vertices.add(createVertex(-0.5f,  0.5f, -0.5f, 0, 0, 0, 0, 0));
+
+        // Reversed winding order (inside-facing)
+        int[] indicesArray = {
+                0, 3, 2, 2, 1, 0,
+                4, 7, 6, 6, 5, 4,
+                8,11,10,10, 9, 8,
+                12,15,14,14,13,12,
+                16,19,18,18,17,16,
+                20,23,22,22,21,20
+        };
+
+        IntBuffer indicesBuffer = BufferUtils.createIntBuffer(indicesArray.length);
+        indicesBuffer.put(indicesArray).flip();
+
+        return new Mesh(vertices, indicesBuffer, new ArrayList<>());
+    }
+
     public static Mesh cube() {
         List<Vertex> vertices = new ArrayList<>();
 

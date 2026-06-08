@@ -81,7 +81,7 @@ public class Texture {
     }
 
     private void fromFile(String path_to_texture, TextureType type, Cubemap.Face face) {
-        if (this.setup == true) {
+        if (this.setup) {
             System.err.println("Cannot load texture from file on already existing texture.");
         };
 
@@ -119,7 +119,7 @@ public class Texture {
 
 
     private void createAttachment(int width, int height) {
-        if (this.setup == true) {
+        if (this.setup) {
             System.err.println("Cannot create attachment on existing texture");
             return;
         }
@@ -176,4 +176,10 @@ public class Texture {
         return this.id;
     }
 
+    public AttachmentType getAttachmentType() {
+        return attachment_type;
+    }
+    public TextureType getTextureType() {
+        return texture_type;
+    }
 }

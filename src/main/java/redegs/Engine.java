@@ -9,6 +9,7 @@ import org.lwjgl.system.MemoryStack;
 import redegs.engine.engine.entities.ControllableCamera;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.Scene;
+import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.MeshPrimitives;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.DirectionalLightSource;
@@ -121,6 +122,8 @@ public class Engine {
         int m_id, m_id2;
         Scene main = new Scene(camera) {};
         Model m = new Model("src/main/resources/scene.gltf");
+        m.getModelMatrix().scale(.1f);
+        m.getModelMatrix().rotate((float) Math.toRadians(-90), new Vector3f(1, 0, 0));
         m.centerOrigin();
         //m.getTransform().position.set(0, 0, 0);
 
@@ -130,6 +133,9 @@ public class Engine {
         Model xm = Model.fromMesh(MeshPrimitives.cube());
         xm.getTransform().model_matrix.translate(0, -1, 0);
         esm.createEntity(xm);
+
+        Cubemap g = Cubemap.fromFile("src/main/resources/skybox");
+        esm.createEntity(g);
 
         for (int i = 0; i < 10; i++) {
             int s = 3;

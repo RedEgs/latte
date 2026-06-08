@@ -32,12 +32,7 @@ public class Model {
 
     public void Draw(Shader shader) {
         for (Mesh m : meshes) {
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                FloatBuffer modelBuffer = stack.mallocFloat(16);
-                this.transform.model_matrix.get(modelBuffer);
-                shader.setUniformMat4("model", modelBuffer);
-            }
-
+            shader.setUniformMat4("model", getModelMatrix());
             m.Draw(shader);
         }
     }

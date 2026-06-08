@@ -1,6 +1,7 @@
 package redegs.engine.graphics.system;
 
 import redegs.engine.graphics.Camera;
+import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
@@ -87,6 +88,13 @@ public class Renderer<T extends Pipeline> {
     }
     public List<PointLightSource> getLights() {
         return pipeline.getRenderContext().lights;
+    }
+
+    public void SubmitSkybox(Cubemap cubemap) {
+        pipeline.getRenderContext().skybox = cubemap;
+    }
+    public void ClearSkybox() {
+        pipeline.getRenderContext().skybox = null;
     }
 
     public <T extends Camera> void setCamera(T camera) {

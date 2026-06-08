@@ -1,6 +1,7 @@
 package redegs.engine.graphics.system;
 
 import redegs.engine.graphics.Camera;
+import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.buffers.FrameBuffer;
 import redegs.engine.graphics.lights.DirectionalLightSource;
@@ -23,4 +24,6 @@ public class RenderContext {
 
     public FrameBuffer gbuffer;
     public FrameBuffer shadowmap;
+
+    public Cubemap skybox;
 }

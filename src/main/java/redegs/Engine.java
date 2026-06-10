@@ -1,5 +1,6 @@
 package redegs;
 
+import imgui.ImGui;
 import org.joml.Random;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -8,6 +9,8 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import redegs.engine.engine.entities.Billboard;
 import redegs.engine.engine.entities.ControllableCamera;
+import redegs.engine.engine.imgui.UIContext;
+import redegs.engine.engine.imgui.UIManager;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.Scene;
 import redegs.engine.graphics.Cubemap;
@@ -18,6 +21,8 @@ import redegs.engine.graphics.lights.PointLightSource;
 import redegs.engine.graphics.pipelines.DeferredPipeline;
 import redegs.engine.graphics.system.Renderer;
 import redegs.engine.util.GLException;
+import imgui.gl3.ImGuiImplGl3;
+import imgui.glfw.ImGuiImplGlfw;
 
 import java.nio.IntBuffer;
 
@@ -36,6 +41,8 @@ public class Engine {
     // The window handle
     private static Engine INSTANCE;
     private static Long window;
+    private final ImGuiImplGlfw glfw = new ImGuiImplGlfw();
+    private final ImGuiImplGl3 gl3 = new ImGuiImplGl3();
 
     private final Float version = 0.2f;
     private final String name = "Latte" + " " + version;
@@ -45,6 +52,8 @@ public class Engine {
 
     private double last_time, delta_time;
     EntitySceneManager esm = EntitySceneManager.getInstance();
+    UIManager uim;
+
 
     private void Init() {
         // Set up an error callback. The default implementation
@@ -72,10 +81,6 @@ public class Engine {
             throw new RuntimeException("Failed to create the GLFW window");
 
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-        glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-            if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
-                glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
-        });
 
         // Get the thread stack and push a new frame
         try ( MemoryStack stack = stackPush() ) {
@@ -102,6 +107,11 @@ public class Engine {
         glfwSwapInterval(1);
         glfwShowWindow(window);
 
+        //input = Input.getInstance();
+        glfwSetKeyCallback(Engine.getWindow(), (w, key, scancode, action, mods) -> {
+            Engine.onKeyPress(key, scancode, action, mods);
+        });
+
         GL.createCapabilities();
         glViewport(0, 0, screenWidth, screenHeight);
         glEnable(GL_DEPTH_TEST); // CRITICAL: Enable depth testing!
@@ -109,6 +119,18 @@ public class Engine {
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glEnable(GL_FRAMEBUFFER_SRGB);
         glEnable(GL_CULL_FACE);
+
+        uim =  UIManager.getInstance();
+
+        UIContext context = new UIContext(){
+            @Override
+            public void Draw() {
+                super.Draw();
+                ImGui.text("Hello");
+            }
+        };
+
+        uim.AddContext(context);
 
     }
 
@@ -175,16 +197,9 @@ public class Engine {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
             glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
 
-            onKeyPress();
-
             calculateDT();
             esm.Execute(delta_time, glfwGetTime());
-
-
-
-
-
-            //System.out.println(main.getLights().size());
+            uim.Execute();
 
             glCheckError();
             glfwSwapBuffers(window); // swap the color buffers
@@ -222,27 +237,18 @@ public class Engine {
         Engine.getInstance().Run();
     }
 
-    public void onKeyPress() {
-//        if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_TRUE) {
-//
-//            Scene main = EntitySceneManager.getInstance().GetScene("main");
-//
-//            for (int i = 0; i < 10; i++) {
-//                int s = 3;
-//                Random rand = new Random();
-//
-//                Float x = (float) rand.nextInt(s);
-//                Float y = (float) rand.nextInt(s);
-//                Float z = (float) rand.nextInt(s);
-//
-//                Float colorx = rand.nextFloat();
-//                Float colory = rand.nextFloat();
-//                Float colorz = rand.nextFloat();
-//
-//                main.getModels().get(1).setModelMatrix(new Matrix4f().identity().translate(new Vector3f(x, y, z)));
-//                main.getLights().get(i).position = new Vector3f(x, y, z);
-//            }
-//        }
+    public static void onKeyPress(int key, int scancode, int action, int mods) {
+        EntitySceneManager esm = EntitySceneManager.getInstance();
+
+        esm.GetScene().camera.onKeyPress(key, scancode, action, mods);
+
+        if (action == GLFW_PRESS) {
+            if (key == GLFW_KEY_TAB) {
+                esm.GetScene().camera.toggleMouseLock();
+            }
+        } else {
+
+        }
 
     }
 
@@ -260,6 +266,14 @@ public class Engine {
         }
 
         return INSTANCE;
+    }
+
+    public static ImGuiImplGlfw getGlfw() {
+        return getInstance().glfw;
+    }
+
+    public static ImGuiImplGl3 getGl3() {
+        return getInstance().gl3;
     }
 
     public Long getWindowLong() {

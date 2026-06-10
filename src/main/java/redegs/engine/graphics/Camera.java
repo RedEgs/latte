@@ -3,12 +3,17 @@ package redegs.engine.graphics;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import redegs.Engine;
+
+import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_DISABLED;
 
 public class Camera {
     protected Matrix4f view;
     protected Matrix4f projection;
     protected Float fov;
 
+    protected boolean mouse_locked = false;
     protected Transform transform;
     protected Integer width, height;
 
@@ -24,6 +29,10 @@ public class Camera {
     }
 
     public void Update(double delta_time, double elapsed_time) {}
+
+    public void onKeyPress(int key, int scancode, int action, int mods) {
+
+    }
 
     public void rotateViewByAngle(Float angle, Vector3f vec) {
         this.view.rotate(angle, vec);
@@ -87,9 +96,9 @@ public class Camera {
 
         this.view.identity();
         this.view.translate(
-                -this.transform.position.x,
-                -this.transform.position.y,
-                -this.transform.position.z
+                this.transform.position.x,
+                this.transform.position.y,
+                this.transform.position.z
         );
     }
 
@@ -111,5 +120,23 @@ public class Camera {
 
     public Matrix4f getStaticViewMatrix() {
         return new Matrix4f(new Matrix3f(view));
+    }
+
+    public void unlockMouse() {
+        glfwSetInputMode(Engine.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        mouse_locked = false;
+    }
+
+    public void lockMouse() {
+        glfwSetInputMode(Engine.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        mouse_locked = true;
+    }
+
+    public void toggleMouseLock() {
+        if (mouse_locked) {
+            unlockMouse();
+        } else {
+            lockMouse();
+        }
     }
 }

@@ -20,6 +20,7 @@ public class ControllableCamera extends Camera {
     private float yaw = -90.0f;   // Looking left/right
     private float pitch = 0.0f;   // Looking up/down
 
+
     private boolean first_mouse = true;
     private float mouse_sensitivity = 0.1f;
     private boolean[] keys = new boolean[GLFW_KEY_LAST + 1];
@@ -30,24 +31,30 @@ public class ControllableCamera extends Camera {
         position = new Vector3f();
         updateVectors(); // Initialize vectors
 
-        glfwSetKeyCallback(Engine.getWindow(), (window, key, scancode, action, mods) -> {
-            if (action == GLFW_PRESS) {
-                keys[key] = true;
-            } else if (action == GLFW_RELEASE) {
-                keys[key] = false;
-            }
-        });
-
-        glfwSetInputMode(Engine.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        lockMouse();
+        first_mouse = true;
     }
 
     @Override
     public void Update(double delta_time, double elapsed_time) {
         super.Update(delta_time, elapsed_time);
+        if (mouse_locked) {
+            handleKeyboard(delta_time);
+            handleMouse(delta_time);
+            updateViewMatrix();
+        }
 
-        handleKeyboard(delta_time);
-        handleMouse(delta_time);
-        updateViewMatrix();
+    }
+
+    @Override
+    public void onKeyPress(int key, int scancode, int action, int mods) {
+        super.onKeyPress(key, scancode, action, mods);
+
+        if (action == GLFW_PRESS) {
+            keys[key] = true;
+        } else if (action == GLFW_RELEASE) {
+            keys[key] = false;
+        }
     }
 
     private void handleKeyboard(double delta_time) {
@@ -139,6 +146,12 @@ public class ControllableCamera extends Camera {
 
     // Reset mouse position (useful when regaining focus)
     public void resetMousePosition() {
+        first_mouse = true;
+    }
+
+    @Override
+    public void lockMouse() {
+        super.lockMouse();
         first_mouse = true;
     }
 }

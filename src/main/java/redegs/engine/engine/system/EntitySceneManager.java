@@ -1,12 +1,17 @@
 package redegs.engine.engine.system;
 
+import redegs.engine.engine.entities.Billboard;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
+import redegs.engine.graphics.passes.BillboardPass;
 import redegs.engine.graphics.system.Renderer;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public final class EntitySceneManager {
     private static EntitySceneManager INSTANCE;
@@ -78,11 +83,14 @@ public final class EntitySceneManager {
     private void UpdateScene(double delta_time, double elapsed_time) {
         current_renderer.ClearModels();
         current_renderer.ClearLights();
+        //current_renderer.ClearBillboards();
+
         current_renderer.SubmitDirectionalLight(getStore(DirectionalLightSource.class).toList().get(0));
         current_renderer.SubmitSkybox(getStore(Cubemap.class).toList().get(0));
 
         current_renderer.SubmitLights(getStore(PointLightSource.class).toList());
         current_renderer.SubmitModels(getStore(Model.class).toList());
+        //current_renderer.SubmitBillboards(getStore(Billboard.class).toList());
 
         current_scene.Update(delta_time, elapsed_time);
         current_renderer.setCamera(current_scene.getCamera());
@@ -109,6 +117,7 @@ public final class EntitySceneManager {
         if (scene != this.current_scene) {
             current_renderer.ClearModels();
             current_renderer.ClearLights();
+            current_renderer.ClearBillboards();
         }
 
         this.current_scene = scene;
@@ -116,6 +125,7 @@ public final class EntitySceneManager {
 
         current_renderer.SubmitLights(getStore(PointLightSource.class).toList());
         current_renderer.SubmitModels(getStore(Model.class).toList());
+        current_renderer.SubmitBillboards(getStore(Billboard.class).toList());
 
     }
 

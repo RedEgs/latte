@@ -593,4 +593,72 @@ public class Shader {
     }
     """;
 
+
+    public static String VertexShader_billboard = """
+    #version 330 core
+    layout (location = 0) in vec3 pos;
+    layout (location = 1) in vec3 Normal;
+    layout (location = 2) in vec2 UV;
+    
+    out vec3 TexCoords;
+    out vec2 UvCoords;
+    
+    uniform mat4 model; // center of billboard;
+    uniform mat4 view;
+    uniform mat4 proj;
+    
+    uniform vec3 c_pos;
+    uniform float size;
+    
+    bool ylock = false;
+    
+    void main()
+    {
+        UvCoords = UV;
+    
+        vec3 centerWS = model[3].xyz;
+    
+        vec3 right;
+        vec3 up;
+    
+        if (ylock)
+        {
+            // Cylindrical (Y-locked)
+            vec3 toCam = c_pos - centerWS;
+            toCam.y = 0.0;
+            toCam = normalize(toCam);
+    
+            up = vec3(0.0, 1.0, 0.0);
+            right = normalize(cross(up, toCam));
+        }
+        else
+        {
+            // Spherical (full facing)
+            mat4 invView = inverse(view);
+            right = normalize(invView[0].xyz);
+            up    = normalize(invView[1].xyz);
+        }
+    
+        vec3 offset =
+        right * pos.x * size +
+        up    * pos.y * size;
+    
+        gl_Position = proj * view * vec4(centerWS + offset, 1.0);
+    }
+    """;
+
+    public static String FragmentShader_billboard = """
+    #version 330 core
+    out vec4 FragColor;
+    
+    in vec3 TexCoords;
+    in vec2 UvCoords;
+    
+    uniform sampler2D tex;
+
+    void main()
+    {   
+        FragColor = texture(tex, UvCoords);
+    }
+    """;
 }

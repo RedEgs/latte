@@ -1,6 +1,7 @@
 package redegs.engine.graphics.system;
 
 import redegs.Engine;
+import redegs.engine.engine.entities.Billboard;
 import redegs.engine.graphics.Camera;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.PointLightSource;
@@ -23,6 +24,7 @@ public class Pipeline {
 
         render_context.camera = new Camera(render_context.width, render_context.height);
         render_context.models = new ArrayList<Model>();
+        render_context.billboards = new ArrayList<Billboard>();
         render_context.lights = new ArrayList<PointLightSource>();
     }
 

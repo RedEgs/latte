@@ -1,5 +1,6 @@
 package redegs.engine.graphics.system;
 
+import redegs.engine.engine.entities.Billboard;
 import redegs.engine.graphics.Camera;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
@@ -19,6 +20,7 @@ public class RenderContext {
     public Integer width, height;
 
     public List<Model> models;
+    public List<Billboard> billboards;
     public List<PointLightSource> lights;
     public DirectionalLightSource dir_light;
 

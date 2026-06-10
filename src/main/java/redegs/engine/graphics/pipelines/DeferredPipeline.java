@@ -3,10 +3,7 @@ package redegs.engine.graphics.pipelines;
 import redegs.Engine;
 import redegs.engine.graphics.Texture;
 import redegs.engine.graphics.buffers.FrameBuffer;
-import redegs.engine.graphics.passes.GeometryPass;
-import redegs.engine.graphics.passes.LightingPass;
-import redegs.engine.graphics.passes.ShadowPass;
-import redegs.engine.graphics.passes.SkyboxPass;
+import redegs.engine.graphics.passes.*;
 import redegs.engine.graphics.system.Pipeline;
 
 public class DeferredPipeline extends Pipeline {
@@ -39,6 +36,7 @@ public class DeferredPipeline extends Pipeline {
         NewPass(ShadowPass.class);
         NewPass(LightingPass.class);
         NewPass(SkyboxPass.class);
+        NewPass(BillboardPass.class);
 
     }
 //

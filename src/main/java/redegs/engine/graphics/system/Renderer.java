@@ -1,5 +1,6 @@
 package redegs.engine.graphics.system;
 
+import redegs.engine.engine.entities.Billboard;
 import redegs.engine.graphics.Camera;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
@@ -7,6 +8,8 @@ import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -72,6 +75,23 @@ public class Renderer<T extends Pipeline> {
     public List<Model> getModels() {
         return pipeline.getRenderContext().models;
     }
+
+    public void SubmitBillboard(Billboard Billboard) {
+        pipeline.getRenderContext().billboards.add(Billboard);
+    }
+    public void SubmitBillboards(List<Billboard> Billboards) {
+        pipeline.getRenderContext().billboards.addAll(Billboards);
+    }
+    public void ClearBillboards() {pipeline.getRenderContext().billboards.clear(); }
+    public List<Billboard> PopBillboards() {
+        List<Billboard> Billboards = new ArrayList<>( pipeline.getRenderContext().billboards);
+        pipeline.getRenderContext().billboards.clear();
+        return Billboards;
+    }
+    public List<Billboard> getBillboards() {
+        return pipeline.getRenderContext().billboards;
+    }
+
 
     public void SubmitDirectionalLight(DirectionalLightSource light) {
         pipeline.getRenderContext().dir_light = light;

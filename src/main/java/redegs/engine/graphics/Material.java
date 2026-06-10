@@ -14,11 +14,15 @@ public class Material {
         this.specular = specular;
         this.shininess = shininess;
     }
+
+
     public void apply(Shader shader) {
         shader.setUniform3f("material.ambient", ambient);
         if (diffuse != null) {
             diffuse.use(0, shader, "material.diffuse");
-            diffuse.use(1, shader, "material.specular");
+        }
+        if (specular != null) {
+            specular.use(1, shader, "material.specular");
         }
         shader.setUniform1f("material.shininess", shininess);
     }

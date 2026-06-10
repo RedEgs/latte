@@ -6,6 +6,7 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
+import redegs.engine.engine.entities.Billboard;
 import redegs.engine.engine.entities.ControllableCamera;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.Scene;
@@ -137,6 +138,8 @@ public class Engine {
         Cubemap g = Cubemap.fromFile("src/main/resources/skybox");
         esm.createEntity(g);
 
+
+
         for (int i = 0; i < 10; i++) {
             int s = 3;
             Random rand = new Random();
@@ -152,7 +155,9 @@ public class Engine {
 
             //esm.getComponent(m_id, Model.class).getModelMatrix().translate(new Vector3f(x, y, z));
             esm.createEntity(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 10f, 3f));
-
+            Billboard b = new Billboard("src/main/resources/icons/point-light.png");
+            esm.createEntity(b);
+            b.setPosition(new Vector3f(x, y, z));
         }
 
 

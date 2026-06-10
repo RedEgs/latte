@@ -7,8 +7,8 @@ import redegs.engine.graphics.Model;
 import redegs.engine.graphics.Shader;
 import redegs.engine.graphics.buffers.UniformBuffer;
 import redegs.engine.graphics.lights.DirectionalLightSource;
-import redegs.engine.graphics.system.RenderContext;
-import redegs.engine.graphics.system.RenderPass;
+import redegs.engine.graphics.system.render.RenderContext;
+import redegs.engine.graphics.system.render.RenderPass;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;

@@ -1,4 +1,4 @@
-package redegs.engine.graphics.system;
+package redegs.engine.graphics.system.render;
 
 import redegs.Engine;
 import redegs.engine.engine.entities.Billboard;
@@ -12,23 +12,27 @@ import java.util.List;
 
 public class Pipeline {
     private final String name = "GenericPipeline";
-    private final RenderContext render_context;
-    private final List<RenderPass> render_passes;
+    private RenderContext render_context = new RenderContext();
+    private List<RenderPass> render_passes = new ArrayList<>();
+    protected boolean builtPipeline = false;
 
     public Pipeline() {
-        this.render_context = new RenderContext();
-        this.render_passes = new ArrayList<>();
+    }
 
+    public void BuildPipeline() {
+        render_context.camera = new Camera(Engine.getScreenWidth(), Engine.getScreenHeight());
         render_context.width = Engine.getScreenWidth();
         render_context.height = Engine.getScreenHeight();
 
-        render_context.camera = new Camera(render_context.width, render_context.height);
         render_context.models = new ArrayList<Model>();
         render_context.billboards = new ArrayList<Billboard>();
         render_context.lights = new ArrayList<PointLightSource>();
+
+        builtPipeline = true;
     }
 
     public void Execute() {
+        if (!builtPipeline) return;
         for (RenderPass p : render_passes) {
             onPrePass(p.name);
             p.Execute(render_context);
@@ -58,5 +62,8 @@ public class Pipeline {
 
     public RenderContext getRenderContext() {
         return render_context;
+    }
+    public void setCamera(Camera c) {
+        render_context.camera = c;
     }
 }

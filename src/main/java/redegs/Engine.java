@@ -1,6 +1,7 @@
 package redegs;
 
 import imgui.ImGui;
+import imgui.flag.ImGuiWindowFlags;
 import org.joml.Random;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -9,22 +10,26 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import redegs.engine.engine.entities.Billboard;
 import redegs.engine.engine.entities.ControllableCamera;
+import redegs.engine.engine.events.KeyPressEvent;
 import redegs.engine.engine.imgui.UIContext;
 import redegs.engine.engine.imgui.UIManager;
-import redegs.engine.engine.system.EntitySceneManager;
-import redegs.engine.engine.system.Scene;
+import redegs.engine.engine.imgui.context.EditorUIContext;
+import redegs.engine.engine.system.*;
+import redegs.engine.engine.system.component.Component;
+import redegs.engine.engine.system.scene.Scene;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.MeshPrimitives;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
 import redegs.engine.graphics.pipelines.DeferredPipeline;
-import redegs.engine.graphics.system.Renderer;
+import redegs.engine.graphics.system.render.Renderer;
 import redegs.engine.util.GLException;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
 
 import java.nio.IntBuffer;
+import java.util.List;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -109,7 +114,7 @@ public class Engine {
 
         //input = Input.getInstance();
         glfwSetKeyCallback(Engine.getWindow(), (w, key, scancode, action, mods) -> {
-            Engine.onKeyPress(key, scancode, action, mods);
+            onKeyPress( new KeyPressEvent(key, scancode, action, mods));
         });
 
         GL.createCapabilities();
@@ -121,44 +126,41 @@ public class Engine {
         glEnable(GL_CULL_FACE);
 
         uim =  UIManager.getInstance();
-
-        UIContext context = new UIContext(){
-            @Override
-            public void Draw() {
-                super.Draw();
-                ImGui.text("Hello");
-            }
-        };
-
-        uim.AddContext(context);
+        uim.AddContext(new EditorUIContext());
 
     }
+
 
     private void Loop() throws GLException {
 
         Renderer<DeferredPipeline> renderer = new Renderer<>(DeferredPipeline::new);
         esm.setRenderer(renderer);
 
+        Scene main = new Scene() {};
+        esm.AddScene(main, "main");
+
+        renderer.BuildPipeline();
+
         ControllableCamera camera = new ControllableCamera(screenWidth, screenHeight);
         camera.setPosition(new Vector3f(0, 0, 3f));
+        esm.createEntity(camera);
 
-        int m_id, m_id2;
-        Scene main = new Scene(camera) {};
+
         Model m = new Model("src/main/resources/scene.gltf");
         m.getModelMatrix().scale(.1f);
         m.getModelMatrix().rotate((float) Math.toRadians(-90), new Vector3f(1, 0, 0));
         m.centerOrigin();
         //m.getTransform().position.set(0, 0, 0);
 
-        m_id = esm.createEntity(m);
-        esm.createEntity(new DirectionalLightSource(new Vector3f(0, -10, 0), new Vector3f(.05f), new Vector3f(.5f), new Vector3f(.3f)));
+        main.createEntity(m);
+        main.createEntity(new DirectionalLightSource(new Vector3f(0, -10, 0), new Vector3f(.05f), new Vector3f(.5f), new Vector3f(.3f)));
 //
         Model xm = Model.fromMesh(MeshPrimitives.cube());
         xm.getTransform().model_matrix.translate(0, -1, 0);
-        esm.createEntity(xm);
+        main.createEntity(xm);
 
         Cubemap g = Cubemap.fromFile("src/main/resources/skybox");
-        esm.createEntity(g);
+        main.createEntity(g);
 
 
 
@@ -176,14 +178,13 @@ public class Engine {
 
 
             //esm.getComponent(m_id, Model.class).getModelMatrix().translate(new Vector3f(x, y, z));
-            esm.createEntity(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 10f, 3f));
+            int id = main.createEntity(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 10f, 3f));
             Billboard b = new Billboard("src/main/resources/icons/point-light.png");
-            esm.createEntity(b);
+            main.addComponent(id, b);
             b.setPosition(new Vector3f(x, y, z));
         }
 
 
-        esm.AddScene(main, "main");
 
 
 
@@ -192,6 +193,7 @@ public class Engine {
 
 
         glCheckError();
+        UIManager.getInstance().ReadyUp();
 
         while ( !glfwWindowShouldClose(window) ) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
@@ -237,18 +239,12 @@ public class Engine {
         Engine.getInstance().Run();
     }
 
-    public static void onKeyPress(int key, int scancode, int action, int mods) {
+    public static void onKeyPress(KeyPressEvent event) {
         EntitySceneManager esm = EntitySceneManager.getInstance();
-
-        esm.GetScene().camera.onKeyPress(key, scancode, action, mods);
-
-        if (action == GLFW_PRESS) {
-            if (key == GLFW_KEY_TAB) {
-                esm.GetScene().camera.toggleMouseLock();
-            }
-        } else {
-
+        if (esm.GetScene().camera != null) {
+            esm.GetScene().camera.onKeyPress(event);
         }
+
 
     }
 
@@ -282,4 +278,6 @@ public class Engine {
     public static Long getWindow() {
         return getInstance().getWindowLong();
     }
+
+
 }

@@ -4,15 +4,22 @@ import redegs.Engine;
 import redegs.engine.graphics.Texture;
 import redegs.engine.graphics.buffers.FrameBuffer;
 import redegs.engine.graphics.passes.*;
-import redegs.engine.graphics.system.Pipeline;
+import redegs.engine.graphics.system.render.Pipeline;
 
 public class DeferredPipeline extends Pipeline {
-    private final FrameBuffer gbuffer;
-    private final FrameBuffer shadowmap;
+    private FrameBuffer gbuffer;
+    private FrameBuffer shadowmap;
 
     public DeferredPipeline() {
-        int width = Engine.getScreenWidth();
+        super();
+    }
+
+    @Override
+    public void BuildPipeline() {
+        super.BuildPipeline();
+
         int height = Engine.getScreenHeight();
+        int width = Engine.getScreenWidth();
 
         gbuffer = new FrameBuffer(width, height);
         gbuffer.addColorAttachment(new Texture(width, height, Texture.AttachmentType.POSITION));
@@ -37,8 +44,8 @@ public class DeferredPipeline extends Pipeline {
         NewPass(LightingPass.class);
         NewPass(SkyboxPass.class);
         NewPass(BillboardPass.class);
-
     }
+
 //
 //    @Override
 //    protected void onPrePass(String render_pass_name) {

@@ -1,74 +1,51 @@
 package redegs.engine.engine.system;
 
 import redegs.engine.engine.entities.Billboard;
+import redegs.engine.engine.entities.ControllableCamera;
+import redegs.engine.engine.system.component.ComponentStore;
+import redegs.engine.engine.system.component.PendingEntityStaging;
+import redegs.engine.engine.system.scene.Scene;
+import redegs.engine.engine.system.scene.SceneRegistry;
+import redegs.engine.engine.system.scene.SceneRenderSync;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
-import redegs.engine.graphics.passes.BillboardPass;
-import redegs.engine.graphics.system.Renderer;
+import redegs.engine.graphics.system.render.Renderer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public final class EntitySceneManager {
+
     private static EntitySceneManager INSTANCE;
 
-    private final HashMap<String, Scene> scenes = new HashMap<String, Scene>();
-    private final HashMap<Class<?>, ComponentStore<?>> stores = new HashMap<>();
-
-    private Scene current_scene;
-    private String current_scene_name;
-
-    private int next_entity = 0;
+    private final SceneRegistry sceneRegistry = new SceneRegistry();
+    private final PendingEntityStaging staging = new PendingEntityStaging();
 
     private Renderer current_renderer;
+    private SceneRenderSync renderSync;
 
     public EntitySceneManager() {}
 
-    public int createEntity() {
-        return next_entity++;
-    }
-
-    @SafeVarargs
-    public final <T> int createEntity(T... component) {
-        int i = next_entity++;
-        for (T c : component) {
-            addComponent(i, c);
+    public static EntitySceneManager getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new EntitySceneManager();
         }
-        return i;
+        return INSTANCE;
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> ComponentStore<T> getStore(Class<T> type) {
-        return (ComponentStore<T>) stores.computeIfAbsent(
-                type,
-                k -> new ComponentStore<>()
-        );
-    }
-
-    public <T> void addComponent(int entity, T component) {
-        getStore((Class<T>) component.getClass()).add(entity, component);
-    }
-
-    public <T> T getComponent(int entity, Class<T> type) {
-        return getStore(type).get(entity);
-    }
-
-    public <T> boolean hasComponent(int entity, Class<T> type) {
-        return getStore(type).has(entity);
-    }
-
-    public <T> void removeComponent(int entity, Class<T> type) {
-        getStore(type).remove(entity);
-    }
-
+    // ------------------------------------------------------------------
+    // Frame execution
+    // ------------------------------------------------------------------
 
     public void Execute(double delta_time, double elapsed_time) {
-        if (current_scene != null) {
-            UpdateScene(delta_time, elapsed_time);
+        Scene scene = sceneRegistry.getCurrentScene();
+
+        if (scene != null) {
+            scene.Update(delta_time, elapsed_time);
+            if (renderSync != null) {
+                renderSync.sync(scene);
+            }
         } else {
             System.err.println("No scenes exist.");
         }
@@ -80,76 +57,150 @@ public final class EntitySceneManager {
         }
     }
 
-    private void UpdateScene(double delta_time, double elapsed_time) {
-        current_renderer.ClearModels();
-        current_renderer.ClearLights();
-        //current_renderer.ClearBillboards();
-
-        current_renderer.SubmitDirectionalLight(getStore(DirectionalLightSource.class).toList().get(0));
-        current_renderer.SubmitSkybox(getStore(Cubemap.class).toList().get(0));
-
-        current_renderer.SubmitLights(getStore(PointLightSource.class).toList());
-        current_renderer.SubmitModels(getStore(Model.class).toList());
-        //current_renderer.SubmitBillboards(getStore(Billboard.class).toList());
-
-        current_scene.Update(delta_time, elapsed_time);
-        current_renderer.setCamera(current_scene.getCamera());
-    }
+    // ------------------------------------------------------------------
+    // Scene management
+    // ------------------------------------------------------------------
 
     public void AddScene(Scene scene, String name) {
-        if (scenes.get(name) == null) {
-            scenes.put(name, scene);
+        boolean wasEmpty = sceneRegistry.getCurrentScene() == null;
+        sceneRegistry.addScene(name, scene);
 
-            if (current_scene == null) {
-                SetScene(scene, name);
-            }
+        // If this is the first scene ever added, treat it as activation.
+        if (wasEmpty && sceneRegistry.getCurrentScene() == scene) {
+            activateScene(scene, name);
         }
     }
 
     public void SetScene(String name) {
-        Scene s = scenes.get(name);
-        if (s != null) {
-            SetScene(s, name);
+        Scene scene = sceneRegistry.getScene(name);
+        if (scene != null) {
+            sceneRegistry.setCurrentScene(name);
+            activateScene(scene, name);
         }
     }
 
-    private void SetScene(Scene scene, String name) {
-        if (scene != this.current_scene) {
-            current_renderer.ClearModels();
-            current_renderer.ClearLights();
-            current_renderer.ClearBillboards();
+    /** Shared logic for "a scene just became the active one". */
+    private void activateScene(Scene scene, String name) {
+        if (current_renderer != null) {
+            if (scene.getStore(ControllableCamera.class).toList().size() < 0) {
+                current_renderer.submitCamera(scene.getStore(ControllableCamera.class).toList().get(0));
+            }
         }
 
-        this.current_scene = scene;
-        this.current_scene_name = name;
+        if (!staging.isEmpty()) {
+            scene.mergeTemporaryStore(staging.getNextEntity(), staging.getStores());
+            staging.clear();
+        }
 
-        current_renderer.SubmitLights(getStore(PointLightSource.class).toList());
-        current_renderer.SubmitModels(getStore(Model.class).toList());
-        current_renderer.SubmitBillboards(getStore(Billboard.class).toList());
-
+        if (renderSync != null) {
+            renderSync.sync(scene);
+        }
     }
 
     public Scene GetScene(String name) {
-        return this.scenes.get(name);
-    }
-    public Scene GetScene() { return this.current_scene; }
-    public String GetSceneName() {
-        return this.current_scene_name;
+        return sceneRegistry.getScene(name);
     }
 
+    public Scene GetScene() {
+        return sceneRegistry.getCurrentScene();
+    }
+
+    public String GetSceneName() {
+        return sceneRegistry.getCurrentSceneName();
+    }
+
+    // ------------------------------------------------------------------
+    // Renderer
+    // ------------------------------------------------------------------
 
     public void setRenderer(Renderer renderer) {
         this.current_renderer = renderer;
+        this.renderSync = new SceneRenderSync(renderer);
     }
 
     public Renderer getRenderer() {
         return this.current_renderer;
     }
 
-    public static EntitySceneManager getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new EntitySceneManager();
+    // ------------------------------------------------------------------
+    // Entity / component facade
+    // ------------------------------------------------------------------
+
+    public int createEntity() {
+        Scene scene = sceneRegistry.getCurrentScene();
+        return (scene != null) ? scene.createEntity() : staging.createEntity();
+    }
+
+    @SafeVarargs
+    public final <T> int createEntity(T... components) {
+        Scene scene = sceneRegistry.getCurrentScene();
+        if (scene != null) {
+            return scene.createEntity(components);
         }
-        return INSTANCE;
+
+        int entity = staging.createEntity();
+        for (T c : components) {
+            staging.addComponent(entity, c);
+        }
+        return entity;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> void addComponent(int entity, T component) {
+        Scene scene = sceneRegistry.getCurrentScene();
+        if (scene != null) {
+            scene.getStore((Class<T>) component.getClass()).add(entity, component);
+        } else {
+            staging.addComponent(entity, component);
+        }
+    }
+
+    public <T> T getComponent(int entity, Class<T> type) {
+        Scene scene = sceneRegistry.getCurrentScene();
+        if (scene != null) {
+            return scene.getStore(type).get(entity);
+        }
+        return staging.getStore(type).get(entity);
+    }
+
+    public <T> boolean hasComponent(int entity, Class<T> type) {
+        Scene scene = sceneRegistry.getCurrentScene();
+        if (scene != null) {
+            return scene.getStore(type).has(entity);
+        }
+        return staging.getStore(type).has(entity);
+    }
+
+    public <T> void removeComponent(int entity, Class<T> type) {
+        Scene scene = sceneRegistry.getCurrentScene();
+        if (scene != null) {
+            scene.getStore(type).remove(entity);
+        } else {
+            staging.getStore(type).remove(entity);
+        }
+    }
+
+    public int getEntities() {
+        Scene scene = sceneRegistry.getCurrentScene();
+        return (scene != null) ? scene.getEntities() : staging.getNextEntity();
+    }
+
+    public List<?> getComponents(int entity) {
+        List<Object> objects = new ArrayList<>();
+        for (ComponentStore<?> cs : getStores().values()) {
+            Object c = cs.get(entity);
+            if (c != null) {
+                objects.add(c);
+            }
+        }
+        return objects;
+    }
+
+    public HashMap<Class<?>, ComponentStore<?>> getStores() {
+        Scene scene = sceneRegistry.getCurrentScene();
+        if (scene != null) {
+            return scene.getStores();
+        }
+        return staging.getStores();
     }
 }

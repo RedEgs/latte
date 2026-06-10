@@ -4,11 +4,14 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import redegs.Engine;
+import redegs.engine.engine.events.KeyPressEvent;
+import redegs.engine.engine.system.component.Component;
+import redegs.engine.engine.system.EntitySceneManager;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_DISABLED;
 
-public class Camera {
+public class Camera extends Component {
     protected Matrix4f view;
     protected Matrix4f projection;
     protected Float fov;
@@ -18,11 +21,14 @@ public class Camera {
     protected Integer width, height;
 
     public Camera(int width, int height) {
+        super( EntitySceneManager.getInstance().createEntity());
+        name = "CameraComponent";
+
         view = new Matrix4f().identity();
         projection = perspectiveDefaultMatrix(width, height);
         fov = projection.perspectiveFov();
 
-        transform = new Transform();
+        transform = new Transform(entity);
 
         this.width = width;
         this.height = height;
@@ -30,7 +36,7 @@ public class Camera {
 
     public void Update(double delta_time, double elapsed_time) {}
 
-    public void onKeyPress(int key, int scancode, int action, int mods) {
+    public void onKeyPress(KeyPressEvent event) {
 
     }
 

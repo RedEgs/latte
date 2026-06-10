@@ -2,8 +2,8 @@ package redegs.engine.graphics.passes;
 
 import redegs.engine.graphics.Shader;
 import redegs.engine.graphics.lights.DirectionalLightSource;
-import redegs.engine.graphics.system.RenderContext;
-import redegs.engine.graphics.system.RenderPass;
+import redegs.engine.graphics.system.render.RenderContext;
+import redegs.engine.graphics.system.render.RenderPass;
 
 import static org.lwjgl.opengl.GL11C.*;
 

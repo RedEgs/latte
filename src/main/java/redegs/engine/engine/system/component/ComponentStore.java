@@ -1,4 +1,4 @@
-package redegs.engine.engine.system;
+package redegs.engine.engine.system.component;
 
 import java.util.ArrayList;
 import java.util.HashMap;

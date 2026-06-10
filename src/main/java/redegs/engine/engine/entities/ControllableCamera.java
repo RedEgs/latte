@@ -2,6 +2,7 @@ package redegs.engine.engine.entities;
 
 import org.joml.Vector3f;
 import redegs.Engine;
+import redegs.engine.engine.events.KeyPressEvent;
 import redegs.engine.graphics.Camera;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -27,6 +28,7 @@ public class ControllableCamera extends Camera {
 
     public ControllableCamera(int width, int height) {
         super(width, height);
+        name = "ControllableCameraComponent";
 
         position = new Vector3f();
         updateVectors(); // Initialize vectors
@@ -46,15 +48,22 @@ public class ControllableCamera extends Camera {
 
     }
 
-    @Override
-    public void onKeyPress(int key, int scancode, int action, int mods) {
-        super.onKeyPress(key, scancode, action, mods);
+    public void onKeyPress(KeyPressEvent event) {
+        super.onKeyPress(event);
 
-        if (action == GLFW_PRESS) {
-            keys[key] = true;
-        } else if (action == GLFW_RELEASE) {
-            keys[key] = false;
+        if (event.action == GLFW_PRESS) {
+            keys[event.key] = true;
+
+            if (event.key == GLFW_KEY_TAB) {
+                toggleMouseLock();
+            }
+
+
+        } else if (event.action == GLFW_RELEASE) {
+            keys[event.key] = false;
         }
+
+
     }
 
     private void handleKeyboard(double delta_time) {

@@ -1,4 +1,4 @@
-package redegs.engine.graphics.system;
+package redegs.engine.graphics.system.render;
 
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.Shader;

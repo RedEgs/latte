@@ -2,23 +2,31 @@ package redegs.engine.graphics;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.lwjgl.system.MemoryStack;
+import redegs.engine.engine.system.component.Component;
+import redegs.engine.engine.system.EntitySceneManager;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Model {
+public class Model extends Component {
     private final List<Mesh> meshes;
-    private final Transform transform = new Transform();
+    private final Transform transform;
 
     public Model() {
+        super(EntitySceneManager.getInstance().createEntity());
+        this.name = "ModelComponent";
+
         this.meshes = new ArrayList<>();
+        this.transform = new Transform(getEntity());
         this.transform.model_matrix = new Matrix4f().identity();
     }
 
     public Model(String path) {
+        super(EntitySceneManager.getInstance().createEntity());
+        this.name = "ModelComponent";
+
         this.meshes = new ArrayList<>();
+        this.transform = new Transform(getEntity());
         this.transform.model_matrix = new Matrix4f().identity();
 
         // Try to load with Assimp first, fall back to OBJ loader

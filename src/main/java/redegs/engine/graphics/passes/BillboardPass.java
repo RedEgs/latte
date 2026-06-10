@@ -2,14 +2,11 @@ package redegs.engine.graphics.passes;
 
 import org.joml.Vector3f;
 import redegs.engine.engine.entities.Billboard;
-import redegs.engine.graphics.Model;
 import redegs.engine.graphics.Shader;
-import redegs.engine.graphics.system.RenderContext;
-import redegs.engine.graphics.system.RenderPass;
+import redegs.engine.graphics.system.render.RenderContext;
+import redegs.engine.graphics.system.render.RenderPass;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL11C.*;

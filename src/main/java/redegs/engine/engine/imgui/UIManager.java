@@ -2,7 +2,9 @@ package redegs.engine.engine.imgui;
 
 import imgui.ImGui;
 import imgui.ImGuiIO;
+import imgui.ImVec2;
 import imgui.flag.ImGuiConfigFlags;
+import imgui.flag.ImGuiDockNodeFlags;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
 import redegs.Engine;
@@ -18,6 +20,7 @@ import static org.lwjgl.opengl.GL11.glEnable;
 public final class UIManager {
     private static UIManager INSTANCE;
 
+    private boolean ready = false;
     private final List<UIContext> contexts = new ArrayList<>();
 
 
@@ -27,20 +30,33 @@ public final class UIManager {
         ImGuiIO io = ImGui.getIO();
         io.setDisplaySize(Engine.getScreenWidth(), Engine.getScreenHeight());
         io.addConfigFlags(ImGuiConfigFlags.DockingEnable);
+        io.addConfigFlags(ImGuiConfigFlags.NavEnableKeyboard);
+        // Enable Keyboard Controls// Enable Docking
+       // io.addConfigFlags(ImGuiConfigFlags.ViewportsEnable);    // Enable Multi-Viewport / Platform Windows
+        io.setConfigViewportsNoTaskBarIcon(true);
+
+
 
         Engine.getGlfw().init(Engine.getWindow(), true);
         Engine.getGl3().init("#version 330");
     }
 
     public void Execute() {
+        if (!ready) return;
+
         glDisable(GL_FRAMEBUFFER_SRGB);
 
         Engine.getGlfw().newFrame();
         Engine.getGl3().newFrame();
         ImGui.newFrame();
+
+        ImGui.dockSpaceOverViewport(ImGui.getID("main_dockspace"), ImGui.getMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+
         DrawUIs();
         ImGui.render();
         Engine.getGl3().renderDrawData(ImGui.getDrawData());
+        ImGui.updatePlatformWindows();
+        ImGui.renderPlatformWindowsDefault();
 
         glEnable(GL_FRAMEBUFFER_SRGB);
 
@@ -56,6 +72,9 @@ public final class UIManager {
         this.contexts.add(context);
     }
 
+    public void ReadyUp() {
+        ready = true;
+    }
 
 
 

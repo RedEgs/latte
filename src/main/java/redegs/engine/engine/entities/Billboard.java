@@ -8,17 +8,23 @@ import java.util.List;
 public class Billboard extends Model {
     private Mesh mesh;
     private Texture texture;
-    private final Transform transform = new Transform();
+    private final Transform transform;
     private float size = 1.0f;
     private boolean ylock = false;
 
 
     public Billboard(Texture texture) {
+        this.name = "BillboardComponent";
+        this.transform =  new Transform(getEntity());
+
         this.mesh = MeshPrimitives.quad();
         this.texture = texture;
     }
 
     public Billboard(String path) {
+        this.name = "BillboardComponent";
+        this.transform =  new Transform(getEntity());
+
         this.mesh = MeshPrimitives.quad();
         this.texture = new Texture(path);
     }

@@ -1,4 +1,4 @@
-package redegs.engine.graphics.system;
+package redegs.engine.graphics.system.render;
 
 import redegs.engine.engine.entities.Billboard;
 import redegs.engine.graphics.Camera;
@@ -8,6 +8,7 @@ import redegs.engine.graphics.buffers.FrameBuffer;
 import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RenderContext {
@@ -19,9 +20,9 @@ public class RenderContext {
 
     public Integer width, height;
 
-    public List<Model> models;
-    public List<Billboard> billboards;
-    public List<PointLightSource> lights;
+    public List<Model> models = new ArrayList<>();
+    public List<Billboard> billboards = new ArrayList<>();
+    public List<PointLightSource> lights = new ArrayList<>();
     public DirectionalLightSource dir_light;
 
     public FrameBuffer gbuffer;

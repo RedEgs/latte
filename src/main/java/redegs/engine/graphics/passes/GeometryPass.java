@@ -49,6 +49,9 @@ public class GeometryPass extends RenderPass {
         shader.setUniformMat4("lightSpaceMatrix", DirectionalLightSource.calculateLightSpaceMatrix(render_context.dir_light.direction, DirectionalLightSource.getLightMatrix()));
 
         DrawGeometry(render_context, shader);
+        if (render_context.selected_model == null) {
+            glClear(GL_STENCIL_BUFFER_BIT);
+        }
 
         render_context.gbuffer.unbind();
 
@@ -71,12 +74,17 @@ public class GeometryPass extends RenderPass {
             shader.setUniformMat4("model", modelMatrix); // You'll need this too
 
             // Draw the mesh
-            if (model.equals(render_context.selected_model)) {
-                glStencilFunc(GL_ALWAYS, 1, 0xFF);
-                glStencilMask(0xFF);
+            if (render_context.selected_model != null) {
+                if (model.equals(render_context.selected_model)) {
+                    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                    glStencilMask(0xFF);
+                } else {
+                    glStencilMask(0x00);
+                }
             } else {
                 glStencilMask(0x00);
             }
+
             model.Draw(shader);
         }
     }

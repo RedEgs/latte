@@ -15,6 +15,7 @@ public class Billboard extends Model {
         this.name = "BillboardComponent";
         this.mesh = MeshPrimitives.quad();
         this.texture = texture;
+
     }
 
     public Billboard(String path) {

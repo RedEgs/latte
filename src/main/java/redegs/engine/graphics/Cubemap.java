@@ -79,6 +79,7 @@ public class Cubemap extends Component {
         return cubemap;
     }
 
+
     public int getId() {
         return id;
     }

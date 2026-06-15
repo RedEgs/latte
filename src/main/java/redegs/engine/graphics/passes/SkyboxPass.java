@@ -15,7 +15,7 @@ public class SkyboxPass extends RenderPass {
     public SkyboxPass(RenderContext render_context) {
         super(render_context);
         name = "SkyboxPass";
-
+        cube.disableRenderInDebug();
     }
 
     @Override

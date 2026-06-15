@@ -63,7 +63,18 @@ public class DebugPass extends RenderPass {
 
         if (render_context.selected_model != null)
             highlighted_model = render_context.selected_model;
-        if (highlighted_model == null) return;
+        else {
+//            glStencilMask(0xFF);
+//            glStencilFunc(GL_ALWAYS, 0, 0xFF);
+//            glDepthMask(true);
+//            glEnable(GL_DEPTH_TEST);
+//            glDisable(GL_STENCIL_TEST);
+//            glDisable(GL_BLEND);
+//
+//            glCullFace(GL_BACK);
+
+            return;
+        };
 
         glEnable(GL_STENCIL_TEST);
         glEnable(GL_BLEND);

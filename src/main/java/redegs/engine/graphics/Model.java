@@ -2,6 +2,7 @@ package redegs.engine.graphics;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import redegs.engine.engine.components.BoundingBox;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.EntitySceneManager;
 
@@ -12,8 +13,11 @@ public class Model extends Component {
     protected final List<Mesh> meshes;
     protected Transform transform;
 
+    protected Boolean _renderInDebug = true;
+
     // Offset applied before the transform, used by centerOrigin()
     protected final Vector3f originOffset = new Vector3f(0, 0, 0);
+    protected BoundingBox cachedBoundingBox = null;
 
     public Model() {
         super(EntitySceneManager.getInstance().createEntity());
@@ -22,6 +26,7 @@ public class Model extends Component {
         this.meshes = new ArrayList<>();
         this.transform = new Transform(getEntity());
         this.transform.model_matrix = new Matrix4f().identity();
+        computeBoundingBox();
     }
 
     public Model(String path) {
@@ -36,6 +41,7 @@ public class Model extends Component {
         try {
             Model loadedModel = ModelLoader.loadModel(path);
             this.meshes.addAll(loadedModel.meshes);
+            computeBoundingBox();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -62,15 +68,19 @@ public class Model extends Component {
     @Override
     public void OnEditorSelect() {
         super.OnEditorSelect();
-        EntitySceneManager.getInstance().getRenderer().selectModel(this);
+        if (_renderInDebug) {
+            EntitySceneManager.getInstance().getRenderer().selectModel(this);
+        }
 
     }
 
     @Override
     public void OnEditorDeselect() {
         super.OnEditorDeselect();
-        EntitySceneManager.getInstance().getRenderer().selectModel(null);
+        if (_renderInDebug) {
+            EntitySceneManager.getInstance().getRenderer().selectModel(null);
 
+        }
     }
 
 
@@ -78,19 +88,22 @@ public class Model extends Component {
     public void OnEditorInspect() {
         super.OnEditorInspect();
 
-        EntitySceneManager esm = EntitySceneManager.getInstance();
+        if (_renderInDebug) {
+            EntitySceneManager esm = EntitySceneManager.getInstance();
 
-        float[] viewMatrix = new float[16];
-        float[] projMatrix = new float[16];
-        float[] modelMatrix = new float[16];
+            float[] viewMatrix = new float[16];
+            float[] projMatrix = new float[16];
+            float[] modelMatrix = new float[16];
 
-        esm.GetScene().camera.getView().get(viewMatrix);
-        esm.GetScene().camera.getProjection().get(projMatrix);
+            esm.GetScene().camera.getView().get(viewMatrix);
+            esm.GetScene().camera.getProjection().get(projMatrix);
 
-        updateModelMatrix();
-        getModelMatrix().get(modelMatrix);
+            updateModelMatrix();
+            getModelMatrix().get(modelMatrix);
 
-        transform.OnEditorInspect();
+            transform.OnEditorInspect();
+            cachedBoundingBox.OnEditorInspect();
+        }
     }
 
     /**
@@ -135,8 +148,38 @@ public class Model extends Component {
         originOffset.set(-centroid.x, -centroid.y, -centroid.z);
     }
 
+    public BoundingBox computeBoundingBox() {
+        if (cachedBoundingBox != null) return cachedBoundingBox;
+
+        Vector3f min = new Vector3f(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
+        Vector3f max = new Vector3f(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE);
+
+        for (Mesh mesh : meshes) {
+            for (Vertex v : mesh.getVertices()) {
+                v.Position.rewind();
+                float x = v.Position.get();
+                float y = v.Position.get();
+                float z = v.Position.get();
+
+                min.min(new Vector3f(x, y, z));
+                max.max(new Vector3f(x, y, z));
+            }
+        }
+
+        cachedBoundingBox = new BoundingBox(min, max, entity);
+        return cachedBoundingBox;
+    }
+
+    // call this if you ever modify the mesh vertices at runtime
+    public void invalidateBoundingBox() {
+        cachedBoundingBox = null;
+    }
+
+
+
     public void addMesh(Mesh mesh) {
         this.meshes.add(mesh);
+        computeBoundingBox();
     }
 
     public List<Mesh> getMeshes() {
@@ -146,6 +189,8 @@ public class Model extends Component {
     public static Model fromMesh(Mesh mesh) {
         Model m = new Model();
         m.meshes.add(mesh);
+        m.computeBoundingBox();
+
         return m;
     }
 
@@ -160,5 +205,13 @@ public class Model extends Component {
 
     public void setModelMatrix(Matrix4f matrix) {
         this.transform.model_matrix = matrix;
+    }
+
+    public void disableRenderInDebug() {
+        this._renderInDebug = false;
+    }
+
+    public void enableRenderInDebug() {
+        this._renderInDebug = true;
     }
 }

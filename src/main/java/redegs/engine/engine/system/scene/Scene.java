@@ -1,6 +1,5 @@
 package redegs.engine.engine.system.scene;
 
-import redegs.engine.engine.entities.ControllableCamera;
 import redegs.engine.engine.system.component.ComponentStore;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.graphics.Camera;

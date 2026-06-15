@@ -1,30 +1,25 @@
-package redegs.engine.engine.entities;
+package redegs.engine.engine.components;
 
 import org.joml.Vector3f;
 import redegs.engine.graphics.*;
 
-import java.util.List;
-
 public class Billboard extends Model {
     private Mesh mesh;
     private Texture texture;
-    private final Transform transform;
     private float size = 1.0f;
     private boolean ylock = false;
 
 
     public Billboard(Texture texture) {
+        super();
         this.name = "BillboardComponent";
-        this.transform =  new Transform(getEntity());
-
         this.mesh = MeshPrimitives.quad();
         this.texture = texture;
     }
 
     public Billboard(String path) {
+        super();
         this.name = "BillboardComponent";
-        this.transform =  new Transform(getEntity());
-
         this.mesh = MeshPrimitives.quad();
         this.texture = new Texture(path);
     }

@@ -44,6 +44,10 @@ public class DeferredPipeline extends Pipeline {
         NewPass(LightingPass.class);
         NewPass(SkyboxPass.class);
         NewPass(BillboardPass.class);
+        NewPass(DebugPass.class);
+        NewPass(ImGuiPass.class);
+
+
     }
 
 //

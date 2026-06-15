@@ -1,16 +1,11 @@
 package redegs.engine.engine.system;
 
-import redegs.engine.engine.entities.Billboard;
-import redegs.engine.engine.entities.ControllableCamera;
+import redegs.engine.engine.components.ControllableCamera;
 import redegs.engine.engine.system.component.ComponentStore;
 import redegs.engine.engine.system.component.PendingEntityStaging;
 import redegs.engine.engine.system.scene.Scene;
 import redegs.engine.engine.system.scene.SceneRegistry;
 import redegs.engine.engine.system.scene.SceneRenderSync;
-import redegs.engine.graphics.Cubemap;
-import redegs.engine.graphics.Model;
-import redegs.engine.graphics.lights.DirectionalLightSource;
-import redegs.engine.graphics.lights.PointLightSource;
 import redegs.engine.graphics.system.render.Renderer;
 
 import java.util.*;

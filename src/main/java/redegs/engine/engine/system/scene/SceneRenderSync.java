@@ -1,8 +1,7 @@
 package redegs.engine.engine.system.scene;
 
-import redegs.engine.engine.entities.Billboard;
-import redegs.engine.engine.entities.ControllableCamera;
-import redegs.engine.graphics.Camera;
+import redegs.engine.engine.components.Billboard;
+import redegs.engine.engine.components.ControllableCamera;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.DirectionalLightSource;

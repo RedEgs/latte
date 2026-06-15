@@ -1,7 +1,7 @@
 package redegs.engine.graphics.system.render;
 
 import redegs.Engine;
-import redegs.engine.engine.entities.Billboard;
+import redegs.engine.engine.components.Billboard;
 import redegs.engine.graphics.Camera;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.PointLightSource;
@@ -44,10 +44,11 @@ public class Pipeline {
     protected void onPostPass(String render_pass_name) {}
 
 
-    public <T extends RenderPass> void NewPass(Class<T> pass) {
+    public <T extends RenderPass> T NewPass(Class<T> pass) {
         try {
             T p = pass.getDeclaredConstructor(RenderContext.class).newInstance(render_context);
             render_passes.add(p);
+            return p;
 
         } catch (InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(e);

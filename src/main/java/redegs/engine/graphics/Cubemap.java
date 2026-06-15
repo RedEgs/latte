@@ -1,5 +1,8 @@
 package redegs.engine.graphics;
 
+import redegs.engine.engine.system.EntitySceneManager;
+import redegs.engine.engine.system.component.Component;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,7 +13,7 @@ import static org.lwjgl.opengl.GL11C.glBindTexture;
 import static org.lwjgl.opengl.GL11C.glGenTextures;
 import static org.lwjgl.opengl.GL13C.GL_TEXTURE_CUBE_MAP;
 
-public class Cubemap {
+public class Cubemap extends Component {
     public enum Face {
         RIGHT,
         LEFT,
@@ -23,7 +26,18 @@ public class Cubemap {
     private int id;
     protected List<Texture> textures;
 
+    public Cubemap(int entity) {
+        super(entity);
+        name = "CubemapComponent";
+
+        id = glGenTextures();
+        textures = new ArrayList<>();
+    }
+
     public Cubemap() {
+        super(EntitySceneManager.getInstance().createEntity());
+        name = "CubemapComponent";
+
         id = glGenTextures();
         textures = new ArrayList<>();
     }

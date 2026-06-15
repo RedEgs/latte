@@ -1,6 +1,6 @@
 package redegs.engine.graphics.system.render;
 
-import redegs.engine.engine.entities.Billboard;
+import redegs.engine.engine.components.Billboard;
 import redegs.engine.graphics.Camera;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
@@ -24,6 +24,7 @@ public class RenderContext {
     public List<Billboard> billboards = new ArrayList<>();
     public List<PointLightSource> lights = new ArrayList<>();
     public DirectionalLightSource dir_light;
+    public Model selected_model;
 
     public FrameBuffer gbuffer;
     public FrameBuffer shadowmap;

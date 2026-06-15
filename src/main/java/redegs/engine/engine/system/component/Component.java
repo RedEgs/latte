@@ -9,6 +9,16 @@ public class Component {
         this.name = "GenericComponent";
     }
 
+    public void OnEditorInspect() {};
+
+    public void OnEditorSelect() {
+
+    }
+
+    public void OnEditorDeselect() {
+
+    }
+
     public String getName(){
         return name;
     };

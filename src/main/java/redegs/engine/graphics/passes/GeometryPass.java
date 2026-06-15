@@ -3,6 +3,9 @@ package redegs.engine.graphics.passes;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
+import redegs.Engine;
+import redegs.engine.engine.imgui.UIContext;
+import redegs.engine.engine.imgui.context.GridUIContext;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.Shader;
 import redegs.engine.graphics.buffers.UniformBuffer;
@@ -17,7 +20,6 @@ import static org.lwjgl.opengl.GL11C.*;
 
 public class GeometryPass extends RenderPass {
     Shader shader = new Shader(Shader.FragmentShader_geometry, Shader.VertexShader_geometry);
-
 
     UniformBuffer ubo;
 
@@ -35,13 +37,17 @@ public class GeometryPass extends RenderPass {
         super.Execute(render_context);
 
         render_context.gbuffer.bind();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glEnable(GL_STENCIL_TEST);
 
         updateCameraUniformBuffer(render_context);
+
+
 
         shader.use();
         shader.setUniform3f("view_pos", render_context.camera.getPosition());
         shader.setUniformMat4("lightSpaceMatrix", DirectionalLightSource.calculateLightSpaceMatrix(render_context.dir_light.direction, DirectionalLightSource.getLightMatrix()));
+
         DrawGeometry(render_context, shader);
 
         render_context.gbuffer.unbind();
@@ -65,6 +71,12 @@ public class GeometryPass extends RenderPass {
             shader.setUniformMat4("model", modelMatrix); // You'll need this too
 
             // Draw the mesh
+            if (model.equals(render_context.selected_model)) {
+                glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                glStencilMask(0xFF);
+            } else {
+                glStencilMask(0x00);
+            }
             model.Draw(shader);
         }
     }

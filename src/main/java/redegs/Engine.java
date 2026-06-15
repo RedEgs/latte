@@ -1,21 +1,17 @@
 package redegs;
 
-import imgui.ImGui;
-import imgui.flag.ImGuiWindowFlags;
 import org.joml.Random;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
-import redegs.engine.engine.entities.Billboard;
-import redegs.engine.engine.entities.ControllableCamera;
+import redegs.engine.engine.components.Billboard;
+import redegs.engine.engine.components.ControllableCamera;
 import redegs.engine.engine.events.KeyPressEvent;
-import redegs.engine.engine.imgui.UIContext;
 import redegs.engine.engine.imgui.UIManager;
 import redegs.engine.engine.imgui.context.EditorUIContext;
 import redegs.engine.engine.system.*;
-import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.scene.Scene;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.MeshPrimitives;
@@ -29,7 +25,6 @@ import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
 
 import java.nio.IntBuffer;
-import java.util.List;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -147,24 +142,24 @@ public class Engine {
 
 
         Model m = new Model("src/main/resources/scene.gltf");
-        m.getModelMatrix().scale(.1f);
-        m.getModelMatrix().rotate((float) Math.toRadians(-90), new Vector3f(1, 0, 0));
+        esm.createEntity(m);
+        m.getTransform().scale = new Vector3f(.1f);
+        m.getTransform().rotation = new Vector3f(-90, 0, 0);
         m.centerOrigin();
+
         //m.getTransform().position.set(0, 0, 0);
 
-        main.createEntity(m);
         main.createEntity(new DirectionalLightSource(new Vector3f(0, -10, 0), new Vector3f(.05f), new Vector3f(.5f), new Vector3f(.3f)));
 //
         Model xm = Model.fromMesh(MeshPrimitives.cube());
         xm.getTransform().model_matrix.translate(0, -1, 0);
         main.createEntity(xm);
 
-        Cubemap g = Cubemap.fromFile("src/main/resources/skybox");
-        main.createEntity(g);
+        main.createEntity(Cubemap.fromFile("src/main/resources/skybox"));
 
 
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1; i++) {
             int s = 3;
             Random rand = new Random();
 
@@ -201,7 +196,7 @@ public class Engine {
 
             calculateDT();
             esm.Execute(delta_time, glfwGetTime());
-            uim.Execute();
+
 
             glCheckError();
             glfwSwapBuffers(window); // swap the color buffers
@@ -278,6 +273,8 @@ public class Engine {
     public static Long getWindow() {
         return getInstance().getWindowLong();
     }
-
+    public static UIManager getUIManager() {
+        return getInstance().uim;
+    }
 
 }

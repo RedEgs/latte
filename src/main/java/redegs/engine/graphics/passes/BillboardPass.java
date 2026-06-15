@@ -1,7 +1,7 @@
 package redegs.engine.graphics.passes;
 
 import org.joml.Vector3f;
-import redegs.engine.engine.entities.Billboard;
+import redegs.engine.engine.components.Billboard;
 import redegs.engine.graphics.Shader;
 import redegs.engine.graphics.system.render.RenderContext;
 import redegs.engine.graphics.system.render.RenderPass;

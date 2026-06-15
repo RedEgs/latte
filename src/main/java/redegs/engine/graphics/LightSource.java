@@ -1,16 +1,19 @@
 package redegs.engine.graphics;
 
+import imgui.ImGui;
 import org.joml.Vector3f;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.Component;
-import redegs.engine.graphics.lights.PointLightSource;
-
-import java.util.ArrayList;
 
 public class LightSource extends Component {
     public Vector3f position;
-    public final Vector3f color;
-    public final float intensity;
+    public Vector3f color;
+    public float intensity;
+
+    protected final Transform transform;
+
+    private final float[] colorArr = new float[3];
+    private final float[] intensitySlider = new float[1];
 
     public LightSource(Vector3f position, Vector3f color, float intensity, int entity) {
         super(entity);
@@ -19,6 +22,9 @@ public class LightSource extends Component {
         this.position = position;
         this.color = color;
         this.intensity = intensity;
+
+        this.transform = new Transform(entity);
+        this.transform.position.set(position);
     }
 
     public LightSource(Vector3f position, Vector3f color, float intensity) {
@@ -28,6 +34,43 @@ public class LightSource extends Component {
         this.position = position;
         this.color = color;
         this.intensity = intensity;
+
+        this.transform = new Transform(entity);
+        this.transform.position.set(position);
+    }
+
+    @Override
+    public void OnEditorInspect() {
+        super.OnEditorInspect();
+        transform.OnEditorInspect();
+
+        ImGui.spacing();
+        ImGui.text("Lighting");
+        ImGui.separator();
+        ImGui.spacing();
+        ImGui.indent(16.0f);
+
+        // sync position from the transform
+        position.set(transform.position);
+
+        // color: sync in, edit, sync back out
+        colorArr[0] = color.x;
+        colorArr[1] = color.y;
+        colorArr[2] = color.z;
+        if (ImGui.colorEdit3("Color", colorArr)) {
+            color.set(colorArr[0], colorArr[1], colorArr[2]);
+        }
+
+        // intensity: sync in, edit, sync back out
+        intensitySlider[0] = intensity;
+        if (ImGui.sliderFloat("Intensity", intensitySlider, 0, 100)) {
+            intensity = intensitySlider[0];
+        }
+
+        ImGui.unindent(16.0f);
+    }
+
+    public Transform getTransform() {
+        return transform;
     }
 }
-

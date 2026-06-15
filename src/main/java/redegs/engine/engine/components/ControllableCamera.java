@@ -1,4 +1,4 @@
-package redegs.engine.engine.entities;
+package redegs.engine.engine.components;
 
 import org.joml.Vector3f;
 import redegs.Engine;
@@ -8,7 +8,6 @@ import redegs.engine.graphics.Camera;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class ControllableCamera extends Camera {
-    protected Vector3f position;
     protected Vector3f front = new Vector3f(0, 0, -1);
     protected Vector3f up = new Vector3f(0, 1, 0);
     protected Vector3f right = new Vector3f(1, 0, 0);
@@ -18,10 +17,6 @@ public class ControllableCamera extends Camera {
 
     private double mouseX = 0.0, mouseY = 0.0;
 
-    private float yaw = -90.0f;   // Looking left/right
-    private float pitch = 0.0f;   // Looking up/down
-
-
     private boolean first_mouse = true;
     private float mouse_sensitivity = 0.1f;
     private boolean[] keys = new boolean[GLFW_KEY_LAST + 1];
@@ -30,8 +25,11 @@ public class ControllableCamera extends Camera {
         super(width, height);
         name = "ControllableCameraComponent";
 
-        position = new Vector3f();
-        updateVectors(); // Initialize vectors
+        transform.rotation.y = -90.0f;
+        transform.rotation.x = 0.0f;
+
+        updateVectors();      // initializes front/up/right
+        updateViewMatrix();   // now safe, fields are set
 
         lockMouse();
         first_mouse = true;
@@ -43,9 +41,8 @@ public class ControllableCamera extends Camera {
         if (mouse_locked) {
             handleKeyboard(delta_time);
             handleMouse(delta_time);
-            updateViewMatrix();
         }
-
+        updateViewMatrix();
     }
 
     public void onKeyPress(KeyPressEvent event) {
@@ -58,12 +55,14 @@ public class ControllableCamera extends Camera {
                 toggleMouseLock();
             }
 
-
         } else if (event.action == GLFW_RELEASE) {
             keys[event.key] = false;
         }
+    }
 
-
+    @Override
+    public void OnEditorInspect() {
+        super.OnEditorInspect();
     }
 
     private void handleKeyboard(double delta_time) {
@@ -71,24 +70,24 @@ public class ControllableCamera extends Camera {
 
         // Move forward/backward relative to where camera is facing
         if (keys[GLFW_KEY_W]) {
-            position.fma(curr_speed, front);
+            transform.position.fma(curr_speed, front);
         }
 
         if (keys[GLFW_KEY_S]) {
-            position.fma(-curr_speed, front);
+            transform.position.fma(-curr_speed, front);
         }
 
         if (keys[GLFW_KEY_D]) {
-            position.fma(curr_speed, right);
+            transform.position.fma(curr_speed, right);
         }
 
         if (keys[GLFW_KEY_A]) {
-            position.fma(-curr_speed, right);
+            transform.position.fma(-curr_speed, right);
         }
 
         // Vertical movement (world up, not camera up)
-        if (keys[GLFW_KEY_SPACE]) position.y -= curr_speed;
-        if (keys[GLFW_KEY_LEFT_SHIFT]) position.y += curr_speed;
+        if (keys[GLFW_KEY_SPACE]) transform.position.y -= curr_speed;
+        if (keys[GLFW_KEY_LEFT_SHIFT]) transform.position.y += curr_speed;
     }
 
     private void handleMouse(double delta_time) {
@@ -112,20 +111,24 @@ public class ControllableCamera extends Camera {
         xoffset *= mouse_sensitivity;
         yoffset *= mouse_sensitivity;
 
-        yaw += xoffset;
-        pitch += yoffset;
+        // yaw -> rotation.y, pitch -> rotation.x
+        transform.rotation.y += (float) xoffset;
+        transform.rotation.x += (float) yoffset;
 
-        if (pitch > 89.0f) pitch = 89.0f;
-        if (pitch < -89.0f) pitch = -89.0f;
+        if (transform.rotation.x > 89.0f) transform.rotation.x = 89.0f;
+        if (transform.rotation.x < -89.0f) transform.rotation.x = -89.0f;
 
         updateVectors();
     }
 
     private void updateVectors() {
-        front.x = (float)(Math.cos(Math.toRadians(yaw))
+        float yaw = transform.rotation.y;
+        float pitch = transform.rotation.x;
+
+        front.x = (float) (Math.cos(Math.toRadians(yaw))
                 * Math.cos(Math.toRadians(pitch)));
-        front.y = (float)Math.sin(Math.toRadians(pitch));
-        front.z = (float)(Math.sin(Math.toRadians(yaw))
+        front.y = (float) Math.sin(Math.toRadians(pitch));
+        front.z = (float) (Math.sin(Math.toRadians(yaw))
                 * Math.cos(Math.toRadians(pitch)));
 
         front.normalize();
@@ -137,15 +140,12 @@ public class ControllableCamera extends Camera {
         up.normalize();
     }
 
-    private void updateViewMatrix() {
-        Vector3f center = new Vector3f(position).add(front);
+    @Override
+    protected void updateViewMatrix() {
+        Vector3f center = new Vector3f(transform.position).add(front);
 
         view.identity();
-        view.lookAt(position, center, up);
-    }
-
-    public Vector3f getPosition() {
-        return this.position;
+        view.lookAt(transform.position, center, up);
     }
 
     // Getter/setter for mouse sensitivity

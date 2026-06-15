@@ -1,6 +1,6 @@
 package redegs.engine.graphics.system.render;
 
-import redegs.engine.engine.entities.Billboard;
+import redegs.engine.engine.components.Billboard;
 import redegs.engine.graphics.Camera;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
@@ -94,6 +94,10 @@ public class Renderer<T extends Pipeline> {
     }
     public Camera getCamera() {
         return pipeline.getRenderContext().camera;
+    }
+
+    public void selectModel(Model model) {
+        this.pipeline.getRenderContext().selected_model = model;
     }
 
 }

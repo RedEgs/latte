@@ -3,6 +3,7 @@ package redegs.engine.engine.imgui;
 import imgui.ImGui;
 import imgui.ImGuiIO;
 import imgui.ImVec2;
+import imgui.extension.imguizmo.ImGuizmo;
 import imgui.flag.ImGuiConfigFlags;
 import imgui.flag.ImGuiDockNodeFlags;
 import imgui.gl3.ImGuiImplGl3;
@@ -35,8 +36,6 @@ public final class UIManager {
        // io.addConfigFlags(ImGuiConfigFlags.ViewportsEnable);    // Enable Multi-Viewport / Platform Windows
         io.setConfigViewportsNoTaskBarIcon(true);
 
-
-
         Engine.getGlfw().init(Engine.getWindow(), true);
         Engine.getGl3().init("#version 330");
     }
@@ -50,9 +49,22 @@ public final class UIManager {
         Engine.getGl3().newFrame();
         ImGui.newFrame();
 
+        ImGuizmo.beginFrame();
+        ImGuizmo.setOrthographic(false);
+        ImGuizmo.enable(true);
+        ImGuizmo.setDrawList(ImGui.getBackgroundDrawList(ImGui.getMainViewport()));
+        ImGuizmo.setRect(
+                0,
+                0,
+                ImGui.getIO().getDisplaySizeX(),
+                ImGui.getIO().getDisplaySizeY()
+        );
+
         ImGui.dockSpaceOverViewport(ImGui.getID("main_dockspace"), ImGui.getMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
 
         DrawUIs();
+
+
         ImGui.render();
         Engine.getGl3().renderDrawData(ImGui.getDrawData());
         ImGui.updatePlatformWindows();

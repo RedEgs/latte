@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Model extends Component {
-    private final List<Mesh> meshes;
-    private final Transform transform;
+    protected final List<Mesh> meshes;
+    protected Transform transform;
+
+    // Offset applied before the transform, used by centerOrigin()
+    protected final Vector3f originOffset = new Vector3f(0, 0, 0);
 
     public Model() {
         super(EntitySceneManager.getInstance().createEntity());
@@ -39,10 +42,72 @@ public class Model extends Component {
     }
 
     public void Draw(Shader shader) {
+        updateModelMatrix();
+
         for (Mesh m : meshes) {
             shader.setUniformMat4("model", getModelMatrix());
             m.Draw(shader);
         }
+    }
+
+    public void DrawNoMaterials(Shader shader) {
+        updateModelMatrix();
+
+        for (Mesh m : meshes) {
+            shader.setUniformMat4("model", getModelMatrix());
+            m.DrawNoMaterials(shader);
+        }
+    }
+
+    @Override
+    public void OnEditorSelect() {
+        super.OnEditorSelect();
+        EntitySceneManager.getInstance().getRenderer().selectModel(this);
+
+    }
+
+    @Override
+    public void OnEditorDeselect() {
+        super.OnEditorDeselect();
+        EntitySceneManager.getInstance().getRenderer().selectModel(null);
+
+    }
+
+
+    @Override
+    public void OnEditorInspect() {
+        super.OnEditorInspect();
+
+        EntitySceneManager esm = EntitySceneManager.getInstance();
+
+        float[] viewMatrix = new float[16];
+        float[] projMatrix = new float[16];
+        float[] modelMatrix = new float[16];
+
+        esm.GetScene().camera.getView().get(viewMatrix);
+        esm.GetScene().camera.getProjection().get(projMatrix);
+
+        updateModelMatrix();
+        getModelMatrix().get(modelMatrix);
+
+        transform.OnEditorInspect();
+    }
+
+    /**
+     * Rebuilds transform.model_matrix from the transform's position,
+     * rotation (degrees, XYZ order) and scale, with the origin offset
+     * (set via centerOrigin()) applied first.
+     */
+    private void updateModelMatrix() {
+        transform.model_matrix.identity()
+                .translate(transform.position)
+                .rotateXYZ(
+                        (float) Math.toRadians(transform.rotation.x),
+                        (float) Math.toRadians(transform.rotation.y),
+                        (float) Math.toRadians(transform.rotation.z)
+                )
+                .scale(transform.scale)
+                .translate(originOffset);
     }
 
     public void centerOrigin() {
@@ -65,8 +130,9 @@ public class Model extends Component {
         // 2. Calculate centroid
         Vector3f centroid = sum.div(totalVertices);
 
-        // 3. Apply negative centroid as a translation offset
-        transform.model_matrix.translate(-centroid.x, -centroid.y, -centroid.z);
+        // 3. Store negative centroid as a permanent offset, applied
+        //    every time updateModelMatrix() rebuilds the matrix.
+        originOffset.set(-centroid.x, -centroid.y, -centroid.z);
     }
 
     public void addMesh(Mesh mesh) {
@@ -88,6 +154,7 @@ public class Model extends Component {
     }
 
     public Matrix4f getModelMatrix() {
+        updateModelMatrix();
         return this.transform.model_matrix;
     }
 

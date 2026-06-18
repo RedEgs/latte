@@ -24,7 +24,9 @@ public class ShadowPass extends RenderPass {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.use();
-        shader.setUniformMat4("lightSpaceMatrix", DirectionalLightSource.calculateLightSpaceMatrix(render_context.dir_light.direction, DirectionalLightSource.getLightMatrix()));
+        if (render_context.dir_light != null) {
+            shader.setUniformMat4("lightSpaceMatrix", DirectionalLightSource.calculateLightSpaceMatrix(render_context.dir_light.direction, DirectionalLightSource.getLightMatrix()));
+        }
         DrawGeometry(render_context, shader);
 
         render_context.shadowmap.unbind();

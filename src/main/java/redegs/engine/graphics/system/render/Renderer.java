@@ -14,6 +14,8 @@ import java.util.function.Supplier;
 
 public class Renderer<T extends Pipeline> {
     protected T pipeline;
+    protected boolean debugRendering = false;
+    protected int debugLevel = 0;
 
     public Renderer(Supplier<T> supplier) {
         this.pipeline = supplier.get();
@@ -100,5 +102,35 @@ public class Renderer<T extends Pipeline> {
         this.pipeline.getRenderContext().selected_model = model;
     }
 
-}
+    public void resize(int width, int height) {
+        this.pipeline.setSize(width, height);
+    }
 
+
+    public void setDebugRendering(boolean value) {
+        this.debugRendering = value;
+        pipeline.getRenderContext().debugRendering = this.debugRendering;
+    }
+
+    public boolean getDebugRendering() {
+        return this.debugRendering;
+    }
+
+    public void toggleDebugRendering() {
+        if (!this.debugRendering) {
+            this.debugRendering = true;
+        } else {
+            this.debugRendering = false;
+        }
+
+        pipeline.getRenderContext().debugRendering = this.debugRendering;
+    }
+
+    public void setDebugLevel(int val) {
+        this.debugLevel = val;
+    }
+
+    public int getDebugLevel() {
+        return this.debugLevel;
+    }
+}

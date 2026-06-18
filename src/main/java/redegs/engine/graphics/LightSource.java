@@ -10,48 +10,54 @@ public class LightSource extends Component {
     public Vector3f color;
     public float intensity;
 
-    protected final Transform transform;
+    protected Transform transform;
+    protected boolean _ownsTransform = false;
 
     private final float[] colorArr = new float[3];
     private final float[] intensitySlider = new float[1];
 
     public LightSource(Vector3f position, Vector3f color, float intensity, int entity) {
         super(entity);
-        name = "LightSourceComponent";
-
-        this.position = position;
-        this.color = color;
-        this.intensity = intensity;
-
-        this.transform = new Transform(entity);
-        this.transform.position.set(position);
+        init(position, color, intensity);
     }
 
     public LightSource(Vector3f position, Vector3f color, float intensity) {
         super(EntitySceneManager.getInstance().createEntity());
+        init(position, color, intensity);
+    }
+
+    private void init(Vector3f position, Vector3f color, float intensity) {
         name = "LightSourceComponent";
 
         this.position = position;
         this.color = color;
         this.intensity = intensity;
 
-        this.transform = new Transform(entity);
+        if (entityHas(Transform.class)) {
+            this.transform = entityGet(Transform.class);
+            _ownsTransform = false;
+
+        } else {
+            this.transform = new Transform(entity);
+            EntitySceneManager.getInstance().addComponent(entity, this.transform);
+            _ownsTransform = true;
+        }
         this.transform.position.set(position);
     }
 
     @Override
     public void OnEditorInspect() {
         super.OnEditorInspect();
-        transform.OnEditorInspect();
+
+        if (_ownsTransform) {
+            transform.OnEditorInspect();
+        }
 
         ImGui.spacing();
         ImGui.text("Lighting");
         ImGui.separator();
         ImGui.spacing();
         ImGui.indent(16.0f);
-
-        // sync position from the transform
-        position.set(transform.position);
 
         // color: sync in, edit, sync back out
         colorArr[0] = color.x;
@@ -72,5 +78,16 @@ public class LightSource extends Component {
 
     public Transform getTransform() {
         return transform;
+    }
+
+    @Override
+    public void OnUpdate() {
+        super.OnUpdate();
+        if (entityHas(Transform.class)) {
+            this.transform = entityGet(Transform.class);
+            this._ownsTransform = false;
+        }
+
+        position.set(transform.position);
     }
 }

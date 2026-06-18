@@ -1,6 +1,7 @@
 package redegs.engine.engine.system;
 
 import redegs.engine.engine.components.ControllableCamera;
+import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.component.ComponentStore;
 import redegs.engine.engine.system.component.PendingEntityStaging;
 import redegs.engine.engine.system.scene.Scene;
@@ -140,6 +141,31 @@ public final class EntitySceneManager {
         return entity;
     }
 
+    public void deleteEntity(int entity) {
+        Scene scene = sceneRegistry.getCurrentScene();
+        if (scene != null) {
+            List<?> comps = getComponents(entity);
+            for (var comp : comps) {
+                if (comp instanceof Component) {
+                    Component c = (Component) comp;
+                    c.OnDelete();
+                }
+
+                removeComponent(entity, comp.getClass());
+            }
+            return;
+        }
+
+        List<?> comps = staging.getComponents(entity);
+        for (var comp : comps) {
+            if (comp instanceof Component) {
+                Component c = (Component) comp;
+                c.OnDelete();
+            }
+            removeComponent(entity, comp.getClass());
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public <T> void addComponent(int entity, T component) {
         Scene scene = sceneRegistry.getCurrentScene();
@@ -148,6 +174,16 @@ public final class EntitySceneManager {
         } else {
             staging.addComponent(entity, component);
         }
+    }
+
+    public <T> T getOrAddComponent(int entity, T component) {
+        @SuppressWarnings("unchecked")
+        Class<T> type = (Class<T>) component.getClass();
+        if (hasComponent(entity, type)) {
+            return getComponent(entity, type);
+        }
+        addComponent(entity, component);
+        return component;
     }
 
     public <T> T getComponent(int entity, Class<T> type) {

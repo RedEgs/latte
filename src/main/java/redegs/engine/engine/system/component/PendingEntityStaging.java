@@ -1,6 +1,8 @@
 package redegs.engine.engine.system.component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class PendingEntityStaging {
@@ -21,6 +23,17 @@ public final class PendingEntityStaging {
     public boolean isEmpty() { return stores.isEmpty(); }
     public int getNextEntity() { return nextEntity; }
     public HashMap<Class<?>, ComponentStore<?>> getStores() { return (HashMap<Class<?>, ComponentStore<?>>) stores; }
+
+    public List<?> getComponents(int entity) {
+        List<Object> objects = new ArrayList<>();
+        for (ComponentStore<?> cs : getStores().values()) {
+            Object c = cs.get(entity);
+            if (c != null) {
+                objects.add(c);
+            }
+        }
+        return objects;
+    }
 
     public void clear() {
         stores = new HashMap<>();

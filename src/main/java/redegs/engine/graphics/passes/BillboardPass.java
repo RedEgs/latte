@@ -12,7 +12,7 @@ import java.util.List;
 import static org.lwjgl.opengl.GL11C.*;
 
 public class BillboardPass extends RenderPass {
-    Shader shader = new Shader(Shader.FragmentShader_billboard, Shader.VertexShader_billboard);
+    private Shader shader = new Shader(Shader.FragmentShader_billboard, Shader.VertexShader_billboard);
 
     public BillboardPass(RenderContext render_context) {
         super(render_context);
@@ -25,6 +25,7 @@ public class BillboardPass extends RenderPass {
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         glDepthMask(false);  // don't write depth
 
         shader.use();
@@ -59,7 +60,15 @@ public class BillboardPass extends RenderPass {
         });
 
         for (Billboard billboard : sorted) {
-            billboard.Draw(shader);
+            if (billboard.getOnTop()) {
+                glDisable(GL_DEPTH);
+                billboard.Draw(shader);
+                glEnable(GL_DEPTH);
+            } else{
+
+                billboard.Draw(shader);
+            }
+
         }
     }
 }

@@ -1,5 +1,6 @@
 package redegs.engine.graphics.passes;
 
+import redegs.engine.graphics.Mesh;
 import redegs.engine.graphics.MeshPrimitives;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.Shader;
@@ -10,22 +11,22 @@ import static org.lwjgl.opengl.GL11C.*;
 
 public class SkyboxPass extends RenderPass {
     Shader shader = new Shader(Shader.FragmentShader_cubemap, Shader.VertexShader_cubemap);
-    Model cube = Model.fromMesh(MeshPrimitives.skyboxCube());
+    Mesh cube = MeshPrimitives.skyboxCube();
 
     public SkyboxPass(RenderContext render_context) {
         super(render_context);
         name = "SkyboxPass";
-        cube.disableRenderInDebug();
     }
 
     @Override
     public void Execute(RenderContext render_context) {
         super.Execute(render_context);
 
+        if (render_context.skybox == null)
+            return;
+
         glDepthMask(false);
         glDepthFunc(GL_LEQUAL);
-
-
 
 
         shader.use();

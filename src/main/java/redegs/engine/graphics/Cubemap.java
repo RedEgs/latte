@@ -57,7 +57,16 @@ public class Cubemap extends Component {
         textures.add(face.ordinal(), texture);
     }
 
-    public static Cubemap fromFile(String path) {
+
+    @Override
+    public void OnEditorInspect() {
+        super.OnEditorInspect();
+        for (Texture texture : textures) {
+            texture.OnEditorInspect();
+        }
+    }
+
+    public static Cubemap fromFile(String path, int entity) {
         List<File> files = List.of(Objects.requireNonNull(new File(path).listFiles()));
         HashMap<String, File> filenames = new HashMap<String, File>();
 
@@ -67,14 +76,14 @@ public class Cubemap extends Component {
                 filenames.put(file.getName().toLowerCase(), file);
             }
         }
-        Cubemap cubemap = new Cubemap();
+        Cubemap cubemap = new Cubemap(entity);
 
-        cubemap.setTexture(new Texture(filenames.get("right.jpg").toPath().toString(), Face.RIGHT), Face.RIGHT);
-        cubemap.setTexture(new Texture(filenames.get("left.jpg").toPath().toString(), Face.LEFT), Face.LEFT);
-        cubemap.setTexture(new Texture(filenames.get("top.jpg").toPath().toString(), Face.TOP), Face.TOP);
-        cubemap.setTexture(new Texture(filenames.get("bottom.jpg").toPath().toString(), Face.BOTTOM), Face.BOTTOM);
-        cubemap.setTexture(new Texture(filenames.get("front.jpg").toPath().toString(), Face.BACK), Face.BACK);
-        cubemap.setTexture(new Texture(filenames.get("back.jpg").toPath().toString(), Face.FRONT), Face.FRONT);
+        cubemap.setTexture(new Texture(filenames.get("right.jpg").toPath().toString(), Face.RIGHT, entity), Face.RIGHT);
+        cubemap.setTexture(new Texture(filenames.get("left.jpg").toPath().toString(), Face.LEFT, entity), Face.LEFT);
+        cubemap.setTexture(new Texture(filenames.get("top.jpg").toPath().toString(), Face.TOP, entity), Face.TOP);
+        cubemap.setTexture(new Texture(filenames.get("bottom.jpg").toPath().toString(), Face.BOTTOM, entity), Face.BOTTOM);
+        cubemap.setTexture(new Texture(filenames.get("front.jpg").toPath().toString(), Face.BACK, entity), Face.BACK);
+        cubemap.setTexture(new Texture(filenames.get("back.jpg").toPath().toString(), Face.FRONT, entity), Face.FRONT);
 
         return cubemap;
     }

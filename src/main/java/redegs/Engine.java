@@ -9,13 +9,16 @@ import org.lwjgl.system.MemoryStack;
 import redegs.engine.engine.components.Billboard;
 import redegs.engine.engine.components.ControllableCamera;
 import redegs.engine.engine.events.KeyPressEvent;
+import redegs.engine.engine.imgui.UIContext;
 import redegs.engine.engine.imgui.UIManager;
 import redegs.engine.engine.imgui.context.EditorUIContext;
 import redegs.engine.engine.system.*;
+import redegs.engine.engine.system.component.ComponentBootstrapper;
 import redegs.engine.engine.system.scene.Scene;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.MeshPrimitives;
 import redegs.engine.graphics.Model;
+import redegs.engine.graphics.Transform;
 import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
 import redegs.engine.graphics.pipelines.DeferredPipeline;
@@ -47,15 +50,17 @@ public class Engine {
     private final Float version = 0.2f;
     private final String name = "Latte" + " " + version;
 
-    private final int screenWidth = 1280;
-    private final int screenHeight = 720;
+    private int screenWidth = 1280;
+    private int screenHeight = 720;
 
     private double last_time, delta_time;
     EntitySceneManager esm = EntitySceneManager.getInstance();
     UIManager uim;
+    static Renderer<DeferredPipeline> renderer ;
 
 
     private void Init() {
+        ComponentBootstrapper.scanAndRegister();
         // Set up an error callback. The default implementation
         // will print the error message in System.err.
         GLFWErrorCallback.createPrint(System.err).set();
@@ -111,6 +116,11 @@ public class Engine {
         glfwSetKeyCallback(Engine.getWindow(), (w, key, scancode, action, mods) -> {
             onKeyPress( new KeyPressEvent(key, scancode, action, mods));
         });
+        glfwSetFramebufferSizeCallback(Engine.getWindow(), (w, width, height) -> {
+            this.screenWidth = width; this.screenHeight = height;
+            renderer.resize(width, height);
+            glViewport(0,0,width,height);
+        });
 
         GL.createCapabilities();
         glViewport(0, 0, screenWidth, screenHeight);
@@ -127,8 +137,7 @@ public class Engine {
 
 
     private void Loop() throws GLException {
-
-        Renderer<DeferredPipeline> renderer = new Renderer<>(DeferredPipeline::new);
+        renderer= new Renderer<>(DeferredPipeline::new);
         esm.setRenderer(renderer);
 
         Scene main = new Scene() {};
@@ -136,48 +145,52 @@ public class Engine {
 
         renderer.BuildPipeline();
 
-        ControllableCamera camera = new ControllableCamera(screenWidth, screenHeight);
+        int camera_id = esm.createEntity();
+        ControllableCamera camera = new ControllableCamera(screenWidth, screenHeight, camera_id);
         camera.setPosition(new Vector3f(0, 0, 3f));
-        esm.createEntity(camera);
+        main.addComponent(camera_id, camera);
 
-
-        Model m = new Model("src/main/resources/scene.gltf");
-        esm.createEntity(m);
+        int m_id = esm.createEntity();
+        Model m = new Model(m_id, "src/main/resources/scene.gltf");
+        main.addComponent(m_id, m);
         m.getTransform().scale = new Vector3f(.1f);
         m.getTransform().rotation = new Vector3f(-90, 0, 0);
         m.centerOrigin();
 
         //m.getTransform().position.set(0, 0, 0);
 
-        main.createEntity(new DirectionalLightSource(new Vector3f(0, -10, 0), new Vector3f(.05f), new Vector3f(.5f), new Vector3f(.3f)));
+        int d_id = main.createEntity();
+        var d = new DirectionalLightSource(new Vector3f(0, -10, 0), new Vector3f(.05f), new Vector3f(.5f), new Vector3f(.3f), d_id);
+        main.addComponent(d_id, d);
+
+        int c_id = main.createEntity();
+        var c = Cubemap.fromFile("src/main/resources/skybox", c_id);
+        main.addComponent(c_id, c);
 //
-        Model xm = Model.fromMesh(MeshPrimitives.cube());
-        xm.getTransform().model_matrix.translate(0, -1, 0);
-        main.createEntity(xm);
-
-        main.createEntity(Cubemap.fromFile("src/main/resources/skybox"));
-
-
-
-        for (int i = 0; i < 1; i++) {
-            int s = 3;
-            Random rand = new Random();
-
-            float x = (float) rand.nextInt(s);
-            float y = (float) rand.nextInt(s);
-            float z = (float) rand.nextInt(s);
-
-            float colorx = rand.nextFloat();
-            float colory = rand.nextFloat();
-            float colorz = rand.nextFloat();
-
-
-            //esm.getComponent(m_id, Model.class).getModelMatrix().translate(new Vector3f(x, y, z));
-            int id = main.createEntity(new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 10f, 3f));
-            Billboard b = new Billboard("src/main/resources/icons/point-light.png");
-            main.addComponent(id, b);
-            b.setPosition(new Vector3f(x, y, z));
-        }
+//
+//        for (int i = 0; i < 1; i++) {
+//            int s = 3;
+//            Random rand = new Random();
+//
+//            float x = (float) rand.nextInt(s);
+//            float y = (float) rand.nextInt(s);
+//            float z = (float) rand.nextInt(s);
+//
+//            float colorx = rand.nextFloat();
+//            float colory = rand.nextFloat();
+//            float colorz = rand.nextFloat();
+//
+//
+//            //esm.getComponent(m_id, Model.class).getModelMatrix().translate(new Vector3f(x, y, z));
+//            int id = main.createEntity();
+////            var t = new Transform(id);
+//            var p = new PointLightSource(new Vector3f(x, y, z), new Vector3f(colorx, colory, colorz), 10f, 3f, id);
+//            var b = new Billboard("src/main/resources/icons/point-light.png", id);
+////            esm.addComponent(id, t);
+//            esm.addComponent(id, p);
+//            esm.addComponent(id, b);
+//
+//        }
 
 
 
@@ -238,6 +251,19 @@ public class Engine {
         EntitySceneManager esm = EntitySceneManager.getInstance();
         if (esm.GetScene().camera != null) {
             esm.GetScene().camera.onKeyPress(event);
+            for (UIContext context: getUIManager().getUIContexts()) {
+                context.onKeyPress(event);
+            }
+
+            if (event.action == GLFW_PRESS) {
+                if (event.key == GLFW_KEY_F1 ) {
+                    renderer.toggleDebugRendering();
+                }
+                else if (event.key == GLFW_KEY_F2) {
+                    getUIManager().getEditorContext().hidden = !getUIManager().getEditorContext().hidden;
+                }
+            }
+
         }
 
 
@@ -257,6 +283,10 @@ public class Engine {
         }
 
         return INSTANCE;
+    }
+
+    public static double getDeltaTime() {
+        return getInstance().delta_time;
     }
 
     public static ImGuiImplGlfw getGlfw() {

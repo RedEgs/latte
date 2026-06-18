@@ -2,6 +2,7 @@ package redegs.engine.graphics.system.render;
 
 import redegs.Engine;
 import redegs.engine.engine.components.Billboard;
+import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.graphics.Camera;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.lights.PointLightSource;
@@ -20,7 +21,9 @@ public class Pipeline {
     }
 
     public void BuildPipeline() {
-        render_context.camera = new Camera(Engine.getScreenWidth(), Engine.getScreenHeight());
+        int camera_id = EntitySceneManager.getInstance().createEntity();
+
+        render_context.camera = new Camera(Engine.getScreenWidth(), Engine.getScreenHeight(), camera_id);
         render_context.width = Engine.getScreenWidth();
         render_context.height = Engine.getScreenHeight();
 
@@ -66,5 +69,11 @@ public class Pipeline {
     }
     public void setCamera(Camera c) {
         render_context.camera = c;
+    }
+
+    public void setSize(int width, int height) {
+        this.render_context.width = width;
+        this.render_context.height = height;
+        this.BuildPipeline();
     }
 }

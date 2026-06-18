@@ -5,15 +5,18 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.Component;
+import redegs.engine.engine.system.component.ComponentMeta;
 import redegs.engine.graphics.Transform;
 
+@ComponentMeta(name = "Directional Light", category = "Lighting", description = "A directional light source.")
 public class DirectionalLightSource extends Component {
     public Vector3f direction;
     public Vector3f ambient;
     public Vector3f diffuse;
     public Vector3f specular;
 
-    protected final Transform transform;
+    protected Transform transform;
+    private boolean _ownsTransform = false;
 
     private final float[] ambientArr = new float[3];
     private final float[] diffuseArr = new float[3];
@@ -28,7 +31,14 @@ public class DirectionalLightSource extends Component {
         this.diffuse = diffuse;
         this.specular = specular;
 
-        this.transform = new Transform(entity);
+        if (entityHas(Transform.class)) {
+            this.transform = entityGet(Transform.class);
+            _ownsTransform = false;
+        } else {
+            this.transform = new Transform(entity);
+            _ownsTransform = true;
+        }
+
         initRotationFromDirection();
     }
 
@@ -41,7 +51,13 @@ public class DirectionalLightSource extends Component {
         this.diffuse = diffuse;
         this.specular = specular;
 
-        this.transform = new Transform(entity);
+        if (entityHas(Transform.class)) {
+            this.transform = entityGet(Transform.class);
+            _ownsTransform = false;
+        } else {
+            this.transform = new Transform(entity);
+            _ownsTransform = true;
+        }
         initRotationFromDirection();
     }
 
@@ -78,7 +94,9 @@ public class DirectionalLightSource extends Component {
     @Override
     public void OnEditorInspect() {
         super.OnEditorInspect();
-        transform.OnEditorInspect();
+        if (_ownsTransform) {
+            transform.OnEditorInspect();
+        }
 
         ImGui.spacing();
         ImGui.text("Directional Light");

@@ -1,5 +1,6 @@
 package redegs.engine.engine.system.scene;
 
+import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.component.ComponentStore;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.graphics.Camera;
@@ -28,9 +29,17 @@ public class Scene {
 
     public void Update(double delta_time, double elapsed_time) {
         if (camera != null) {
-            camera.Update(delta_time, elapsed_time);
+            camera.OnUpdate();
         } else {
             System.err.println("(Scene.Java) No camera has been set for current scene.");
+        }
+
+        for (ComponentStore<?> store : stores.values()) {
+            for (Object component : store.toList()) {
+                if (component instanceof Component c) {
+                    c.OnUpdate();
+                }
+            }
         }
         OnUpdate();
     }

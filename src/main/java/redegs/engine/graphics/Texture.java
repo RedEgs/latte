@@ -1,5 +1,13 @@
 package redegs.engine.graphics;
 
+import imgui.ImGui;
+import imgui.ImVec2;
+import imgui.flag.ImGuiInputTextFlags;
+import imgui.flag.ImGuiSliderFlags;
+import redegs.engine.engine.system.EntitySceneManager;
+import redegs.engine.engine.system.component.Component;
+
+import javax.swing.text.html.parser.Entity;
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL11C.*;
@@ -10,7 +18,7 @@ import static org.lwjgl.opengl.GL21C.GL_SRGB_ALPHA;
 import static org.lwjgl.opengl.GL30C.GL_RGBA16F;
 import static org.lwjgl.opengl.GL30C.glGenerateMipmap;
 
-public class Texture {
+public class Texture extends Component {
     public enum AttachmentType {
         COLOR,
         DEPTH,
@@ -33,7 +41,10 @@ public class Texture {
 
     private boolean setup = false;
 
-    public Texture(String path_to_texture, Cubemap.Face face) {
+    public Texture(String path_to_texture, Cubemap.Face face, int entity) {
+        super(entity);
+        name = "TextureComponent";
+
         id = glGenTextures();
         texture_type = TextureType.CUBEMAP;
         attachment_type = null;
@@ -41,7 +52,10 @@ public class Texture {
         fromFile(path_to_texture, TextureType.CUBEMAP, face);
         setup = true;
     }
-    public Texture(String path_to_texture) {
+    public Texture(String path_to_texture, int entity) {
+        super(entity);
+        name = "TextureComponent";
+
         id = glGenTextures();
         texture_type = TextureType.IMAGE;
         attachment_type = null;
@@ -50,8 +64,45 @@ public class Texture {
 
         setup = true;
     }
+    public Texture(int width, int height, AttachmentType attachment_type, int entity) {
+        super(entity);
+        name = "TextureComponent";
 
+        this.attachment_type = attachment_type;
+        createAttachment(width, height);
+        setup = true;
+    }
+
+    public Texture(String path_to_texture, Cubemap.Face face) {
+        super(EntitySceneManager.getInstance().createEntity());
+        name = "TextureComponent";
+        EntitySceneManager.getInstance().addComponent(entity, this);
+
+        id = glGenTextures();
+        texture_type = TextureType.CUBEMAP;
+        attachment_type = null;
+
+        fromFile(path_to_texture, TextureType.CUBEMAP, face);
+        setup = true;
+    }
+    public Texture(String path_to_texture) {
+        super(EntitySceneManager.getInstance().createEntity());
+        name = "TextureComponent";
+        EntitySceneManager.getInstance().addComponent(entity, this);
+
+        id = glGenTextures();
+        texture_type = TextureType.IMAGE;
+        attachment_type = null;
+
+        fromFile(path_to_texture);
+
+        setup = true;
+    }
     public Texture(int width, int height, AttachmentType attachment_type) {
+        super(EntitySceneManager.getInstance().createEntity());
+        name = "TextureComponent";
+        EntitySceneManager.getInstance().addComponent(entity, this);
+
         this.attachment_type = attachment_type;
         createAttachment(width, height);
         setup = true;
@@ -170,6 +221,44 @@ public class Texture {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         }
+    }
+
+
+    @Override
+    public void OnEditorInspect() {
+        super.OnEditorInspect();
+
+        ImGui.spacing();
+        ImGui.text("Texture");
+        ImGui.separator();
+        ImGui.spacing();
+        ImGui.indent(16.0f);
+
+        ImGui.separatorText("Texture Format");
+        if (getTextureType() != null) {
+            ImGui.beginCombo("Texture Type", getTextureType().toString());
+        } else {
+            ImGui.beginCombo("Texture Type", "NULL");
+        }
+
+        if (getAttachmentType() != null) {
+            ImGui.beginCombo("Attachment Type", getAttachmentType().toString());
+
+        } else {
+            ImGui.beginCombo("Attachment Type", "NULL");
+        }
+
+        ImGui.spacing();
+
+        ImGui.separatorText("Texture Information");
+        ImGui.text("ID: " + id);
+
+        float[] size_arr = new float[]{width, height};
+        ImGui.inputFloat2("Size", size_arr, ImGuiInputTextFlags.ReadOnly);
+
+        ImGui.imageWithBg(id, new ImVec2(128, 128));
+
+        ImGui.unindent(16.0f);
     }
 
     public int getId() {

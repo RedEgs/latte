@@ -1,46 +1,98 @@
 package redegs.engine.graphics;
 
+import imgui.ImGui;
+import imgui.ImVec2;
+import imgui.extension.imguizmo.ImGuizmo;
+import imgui.extension.imguizmo.flag.Mode;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import redegs.engine.engine.components.BoundingBox;
+import redegs.engine.engine.imgui.UIManager;
+import redegs.engine.engine.imgui.context.EditorUIContext;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.EntitySceneManager;
+import redegs.engine.engine.system.component.ComponentMeta;
+import redegs.engine.engine.system.component.ComponentRegistry;
+import redegs.engine.graphics.lights.PointLightSource;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ComponentMeta(name = "Model", category = "Geometry", description = "A Collection of meshes with a transform.")
 public class Model extends Component {
-    protected final List<Mesh> meshes;
+    protected List<Mesh> meshes;
     protected Transform transform;
 
     protected Boolean _renderInDebug = true;
+    protected Boolean _ownsTransform = false;
 
     // Offset applied before the transform, used by centerOrigin()
     protected final Vector3f originOffset = new Vector3f(0, 0, 0);
     protected BoundingBox cachedBoundingBox = null;
 
+
     public Model() {
         super(EntitySceneManager.getInstance().createEntity());
-        this.name = "ModelComponent";
-
-        this.meshes = new ArrayList<>();
-        this.transform = new Transform(getEntity());
-        this.transform.model_matrix = new Matrix4f().identity();
-        computeBoundingBox();
+        //EntitySceneManager.getInstance().addComponent(entity, this);
+        init();
     }
 
     public Model(String path) {
         super(EntitySceneManager.getInstance().createEntity());
+        //EntitySceneManager.getInstance().addComponent(entity, this);
+        init(path);
+    }
+
+    public Model(int entity) {
+        super(entity);
+        init();
+    }
+
+    public Model(int entity, String path) {
+        super(entity);
+        init(path);
+    }
+
+    static {
+        ComponentRegistry.register(
+                Model.class,
+                () -> new Model()
+        );
+    }
+
+    public void init() {
         this.name = "ModelComponent";
 
         this.meshes = new ArrayList<>();
-        this.transform = new Transform(getEntity());
+        if (entityHas(Transform.class)) {
+            this.transform = entityGet(Transform.class);
+            _ownsTransform = false;
+        } else {
+            this.transform = new Transform(entity);
+            _ownsTransform = true;
+        }
         this.transform.model_matrix = new Matrix4f().identity();
+        computeBoundingBox();
+    }
+
+    public void init(String path) {
+        this.name = "ModelComponent";
+
+        this.meshes = new ArrayList<>();
+        if (entityHas(Transform.class)) {
+            this.transform = entityGet(Transform.class);
+            _ownsTransform = false;
+        } else {
+            this.transform = new Transform(entity);
+            EntitySceneManager.getInstance().addComponent(entity, this.transform);
+            _ownsTransform = true;
+        }
+        this.transform.model_matrix = new Matrix4f().identity();
+
 
         // Try to load with Assimp first, fall back to OBJ loader
         try {
-            Model loadedModel = ModelLoader.loadModel(path);
-            this.meshes.addAll(loadedModel.meshes);
+            this.meshes.addAll(ModelLoader.load(path, entity));
             computeBoundingBox();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -62,6 +114,14 @@ public class Model extends Component {
         for (Mesh m : meshes) {
             shader.setUniformMat4("model", getModelMatrix());
             m.DrawNoMaterials(shader);
+        }
+    }
+
+    @Override
+    public void OnDelete() {
+        super.OnDelete();
+        if (_renderInDebug) {
+            EntitySceneManager.getInstance().getRenderer().selectModel(null);
         }
     }
 
@@ -101,7 +161,6 @@ public class Model extends Component {
             updateModelMatrix();
             getModelMatrix().get(modelMatrix);
 
-            transform.OnEditorInspect();
             cachedBoundingBox.OnEditorInspect();
         }
     }
@@ -111,7 +170,7 @@ public class Model extends Component {
      * rotation (degrees, XYZ order) and scale, with the origin offset
      * (set via centerOrigin()) applied first.
      */
-    private void updateModelMatrix() {
+    public void updateModelMatrix() {
         transform.model_matrix.identity()
                 .translate(transform.position)
                 .rotateXYZ(
@@ -170,6 +229,8 @@ public class Model extends Component {
         return cachedBoundingBox;
     }
 
+
+
     // call this if you ever modify the mesh vertices at runtime
     public void invalidateBoundingBox() {
         cachedBoundingBox = null;
@@ -194,6 +255,9 @@ public class Model extends Component {
         return m;
     }
 
+    public BoundingBox getBoundingBox() {
+        return cachedBoundingBox;
+    }
     public Transform getTransform() {
         return transform;
     }

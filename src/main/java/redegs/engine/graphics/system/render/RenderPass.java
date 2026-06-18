@@ -8,9 +8,12 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class RenderPass {
     protected String name;
+    protected Boolean enabled = true;
 
     public RenderPass(RenderContext render_context) {}
-    public void Execute(RenderContext render_context) {}
+    public void Execute(RenderContext render_context) {
+        if (!enabled) return;
+    }
 
     protected void DrawGeometry(RenderContext render_context, Shader shader) {
         for (Model model : render_context.models) {
@@ -46,4 +49,7 @@ public class RenderPass {
 
     }
 
+    protected void setEnabled(Boolean val) {
+        this.enabled = val;
+    }
 }

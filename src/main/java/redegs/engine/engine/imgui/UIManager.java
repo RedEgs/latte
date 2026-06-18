@@ -9,6 +9,7 @@ import imgui.flag.ImGuiDockNodeFlags;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
 import redegs.Engine;
+import redegs.engine.engine.imgui.context.EditorUIContext;
 
 
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public final class UIManager {
 
     private boolean ready = false;
     private final List<UIContext> contexts = new ArrayList<>();
-
+    private EditorUIContext editorContext;
 
     public UIManager() {
         ImGui.createContext();
@@ -52,7 +53,7 @@ public final class UIManager {
         ImGuizmo.beginFrame();
         ImGuizmo.setOrthographic(false);
         ImGuizmo.enable(true);
-        ImGuizmo.setDrawList(ImGui.getBackgroundDrawList(ImGui.getMainViewport()));
+        ImGuizmo.setDrawList(ImGui.getForegroundDrawList(ImGui.getMainViewport()));
         ImGuizmo.setRect(
                 0,
                 0,
@@ -80,7 +81,10 @@ public final class UIManager {
         }
     }
 
-    public void AddContext(UIContext context) {
+    public <T extends UIContext> void AddContext(T context) {
+        if (context instanceof EditorUIContext) {
+            editorContext = (EditorUIContext) context;
+        }
         this.contexts.add(context);
     }
 
@@ -96,5 +100,13 @@ public final class UIManager {
         }
 
         return INSTANCE;
+    }
+
+    public List<UIContext> getUIContexts() {
+        return this.contexts;
+    }
+
+    public EditorUIContext getEditorContext() {
+        return this.editorContext;
     }
 }

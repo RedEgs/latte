@@ -3,6 +3,7 @@ package redegs.engine.graphics;
 import imgui.ImGui;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.Component;
 
 public class Transform extends Component {
@@ -15,11 +16,26 @@ public class Transform extends Component {
     private final float[] rotArr = new float[3];
     private final float[] scaleArr = new float[3];
 
+    protected final Vector3f originOffset = new Vector3f(0, 0, 0);
     public Matrix4f model_matrix = new Matrix4f().identity();
 
     public Transform(int entity) {
         super(entity);
         this.name = "Transform";
+        EntitySceneManager.getInstance().addComponent(entity, this);
+
+    }
+
+    public void updateModelMatrix() {
+        model_matrix.identity()
+                .translate(position)
+                .rotateXYZ(
+                        (float) Math.toRadians(rotation.x),
+                        (float) Math.toRadians(rotation.y),
+                        (float) Math.toRadians(rotation.z)
+                )
+                .scale(scale)
+                .translate(originOffset);
     }
 
     @Override

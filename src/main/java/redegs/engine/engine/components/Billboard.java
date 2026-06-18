@@ -1,5 +1,6 @@
 package redegs.engine.engine.components;
 
+import imgui.ImGui;
 import org.joml.Vector3f;
 import redegs.engine.graphics.*;
 
@@ -8,7 +9,7 @@ public class Billboard extends Model {
     private Texture texture;
     private float size = 1.0f;
     private boolean ylock = false;
-
+    private boolean onTop = true;
 
     public Billboard(Texture texture) {
         super();
@@ -25,6 +26,38 @@ public class Billboard extends Model {
         this.texture = new Texture(path);
     }
 
+    public Billboard(Texture texture, int entity) {
+        super(entity);
+        this.name = "BillboardComponent";
+        this.mesh = MeshPrimitives.quad();
+        this.texture = texture;
+
+    }
+
+    public Billboard(String path, int entity) {
+        super(entity);
+        this.name = "BillboardComponent";
+        this.mesh = MeshPrimitives.quad();
+        this.texture = new Texture(path);
+    }
+
+    @Override
+    public void OnEditorInspect() {
+        super.OnEditorInspect();
+
+        ImGui.spacing();
+        ImGui.text("Billboard");
+        ImGui.separator();
+        ImGui.spacing();
+        ImGui.checkbox("On Top", onTop);
+        ImGui.spacing();
+        ImGui.indent(16.0f);
+
+
+        texture.OnEditorInspect();
+
+        ImGui.unindent();
+    }
 
     @Override
     public void Draw(Shader shader) {
@@ -46,5 +79,13 @@ public class Billboard extends Model {
 
     public Vector3f getPosition() {
         return transform.position;
+    }
+
+    public void setOnTop(boolean value) {
+        this.onTop = value;
+    }
+
+    public boolean getOnTop() {
+        return this.onTop;
     }
 }

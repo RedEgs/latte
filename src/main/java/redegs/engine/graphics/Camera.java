@@ -16,6 +16,8 @@ public class Camera extends Component {
     protected Matrix4f projection;
     protected Float fov;
 
+    protected boolean _ownsTransform = false;
+
     protected boolean mouse_locked = false;
     protected Transform transform;
     protected Integer width, height;
@@ -24,26 +26,52 @@ public class Camera extends Component {
         super(EntitySceneManager.getInstance().createEntity());
         name = "CameraComponent";
 
+        init(width, height);
+    }
+
+    public Camera(int width, int height, int entity) {
+        super(entity);
+        name = "CameraComponent";
+
+        init(width, height);
+    }
+
+
+    private void init(int width, int height) {
         view = new Matrix4f().identity();
         projection = perspectiveDefaultMatrix(width, height);
         fov = projection.perspectiveFov();
 
-        transform = new Transform(entity);
+        if (entityHas(Transform.class)) {
+            this.transform = entityGet(Transform.class);
+            _ownsTransform = false;
+        } else {
+            this.transform = new Transform(entity);
+            EntitySceneManager.getInstance().addComponent(entity, this);
+            _ownsTransform = true;
+        }
 
         this.width = width;
         this.height = height;
-
-        // removed: updateViewMatrix();
     }
 
-    public void Update(double delta_time, double elapsed_time) {}
+    @Override
+    public void OnUpdate() {
+
+    }
+
+
 
     public void onKeyPress(KeyPressEvent event) {}
 
     @Override
     public void OnEditorInspect() {
         super.OnEditorInspect();
+
+
         transform.OnEditorInspect();
+
+
     }
 
     public void rotateViewByAngle(Float angle, Vector3f vec) {

@@ -1,6 +1,7 @@
 package redegs.engine.graphics.system.render;
 
 import redegs.engine.engine.components.Billboard;
+import redegs.engine.engine.components.BoundingBox;
 import redegs.engine.graphics.Camera;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
@@ -14,6 +15,7 @@ import java.util.List;
 public class RenderContext {
     public Camera camera;
 
+    public boolean debugRendering = false;
     public double delta_time;
     public double elapsed_time;
     public Long frame_index;
@@ -23,6 +25,7 @@ public class RenderContext {
     public List<Model> models = new ArrayList<>();
     public List<Billboard> billboards = new ArrayList<>();
     public List<PointLightSource> lights = new ArrayList<>();
+    public List<BoundingBox> boundingBoxes = new ArrayList<>();
     public DirectionalLightSource dir_light;
     public Model selected_model;
 

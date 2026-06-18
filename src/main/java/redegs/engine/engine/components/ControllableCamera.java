@@ -24,7 +24,17 @@ public class ControllableCamera extends Camera {
     public ControllableCamera(int width, int height) {
         super(width, height);
         name = "ControllableCameraComponent";
+        init();
+    }
 
+    public ControllableCamera(int width, int height, int entity) {
+        super(width, height, entity);
+        name = "ControllableCameraComponent";
+        init();
+
+    }
+
+    private void init() {
         transform.rotation.y = -90.0f;
         transform.rotation.x = 0.0f;
 
@@ -36,11 +46,11 @@ public class ControllableCamera extends Camera {
     }
 
     @Override
-    public void Update(double delta_time, double elapsed_time) {
-        super.Update(delta_time, elapsed_time);
+    public void OnUpdate() {
+        double dt = Engine.getDeltaTime();
         if (mouse_locked) {
-            handleKeyboard(delta_time);
-            handleMouse(delta_time);
+            handleKeyboard(dt);
+            handleMouse(dt);
         }
         updateViewMatrix();
     }
@@ -56,6 +66,7 @@ public class ControllableCamera extends Camera {
             }
 
         } else if (event.action == GLFW_RELEASE) {
+            if (event.key == -1) return;
             keys[event.key] = false;
         }
     }
@@ -63,6 +74,7 @@ public class ControllableCamera extends Camera {
     @Override
     public void OnEditorInspect() {
         super.OnEditorInspect();
+
     }
 
     private void handleKeyboard(double delta_time) {

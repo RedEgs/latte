@@ -1,16 +1,23 @@
 package redegs.engine.engine.components;
 import imgui.ImGui;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3dc;
 import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.graphics.Mesh;
 import redegs.engine.graphics.Vertex;
 
+import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
 public class BoundingBox extends Component {
     public Vector3f min;
     public Vector3f max;
+    public Mesh mesh;
 
     public BoundingBox(Vector3f min, Vector3f max, int entity) {
         super(entity);
@@ -118,5 +125,39 @@ public class BoundingBox extends Component {
         }
 
         return new BoundingBox(min, max);
+    }
+
+    public Mesh toWireframeMesh() {
+        Vector3f mn = min;
+        Vector3f mx = max;
+
+        Vector3f zero3 = new Vector3f(0, 0, 0);
+        Vector2f zero2 = new Vector2f(0, 0);
+
+        List<Vertex> vertices = new ArrayList<>();
+        vertices.add(Vertex.createVertex(new Vector3f(mn.x, mn.y, mn.z), zero3, zero2)); // 0 left  bottom back
+        vertices.add(Vertex.createVertex(new Vector3f(mx.x, mn.y, mn.z), zero3, zero2)); // 1 right bottom back
+        vertices.add(Vertex.createVertex(new Vector3f(mn.x, mx.y, mn.z), zero3, zero2)); // 2 left  top    back
+        vertices.add(Vertex.createVertex(new Vector3f(mx.x, mx.y, mn.z), zero3, zero2)); // 3 right top    back
+        vertices.add(Vertex.createVertex(new Vector3f(mn.x, mn.y, mx.z), zero3, zero2)); // 4 left  bottom front
+        vertices.add(Vertex.createVertex(new Vector3f(mx.x, mn.y, mx.z), zero3, zero2)); // 5 right bottom front
+        vertices.add(Vertex.createVertex(new Vector3f(mn.x, mx.y, mx.z), zero3, zero2)); // 6 left  top    front
+        vertices.add(Vertex.createVertex(new Vector3f(mx.x, mx.y, mx.z), zero3, zero2)); // 7 right top    front
+
+        int[] edgeIndices = {
+                // back face
+                0, 1,  1, 3,  3, 2,  2, 0,
+                // front face
+                4, 5,  5, 7,  7, 6,  6, 4,
+                // connecting edges
+                0, 4,  1, 5,  2, 6,  3, 7
+        };
+
+        IntBuffer indices = BufferUtils.createIntBuffer(edgeIndices.length);
+        for (int i : edgeIndices) indices.put(i);
+        indices.flip();
+
+        this.mesh = new Mesh(vertices, indices, new ArrayList<>());
+        return mesh;
     }
 }

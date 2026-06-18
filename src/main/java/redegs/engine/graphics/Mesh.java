@@ -86,6 +86,12 @@ public class Mesh {
         vao.unbind();
     }
 
+    public void DrawLines(Shader shader) {
+        vao.bind();
+        glDrawElements(GL_LINES, indices.capacity(), GL_UNSIGNED_INT, 0);
+        vao.unbind();
+    }
+
     public List<Vertex> getVertices() {
         return vertices.stream().collect(Collectors.toList());
     }

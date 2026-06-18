@@ -42,11 +42,12 @@ public class GeometryPass extends RenderPass {
 
         updateCameraUniformBuffer(render_context);
 
-
-
         shader.use();
         shader.setUniform3f("view_pos", render_context.camera.getPosition());
-        shader.setUniformMat4("lightSpaceMatrix", DirectionalLightSource.calculateLightSpaceMatrix(render_context.dir_light.direction, DirectionalLightSource.getLightMatrix()));
+        if (render_context.dir_light != null) {
+
+            shader.setUniformMat4("lightSpaceMatrix", DirectionalLightSource.calculateLightSpaceMatrix(render_context.dir_light.direction, DirectionalLightSource.getLightMatrix()));
+        }
 
         DrawGeometry(render_context, shader);
         if (render_context.selected_model == null) {

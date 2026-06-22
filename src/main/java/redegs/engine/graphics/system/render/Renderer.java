@@ -1,6 +1,7 @@
 package redegs.engine.graphics.system.render;
 
 import redegs.engine.engine.components.Billboard;
+import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.graphics.Camera;
 import redegs.engine.graphics.Cubemap;
 import redegs.engine.graphics.Model;
@@ -16,6 +17,7 @@ public class Renderer<T extends Pipeline> {
     protected T pipeline;
     protected boolean debugRendering = false;
     protected int debugLevel = 0;
+    protected boolean noCamera = true;
 
     public Renderer(Supplier<T> supplier) {
         this.pipeline = supplier.get();
@@ -92,6 +94,11 @@ public class Renderer<T extends Pipeline> {
     }
 
     public <T extends Camera> void submitCamera(T camera) {
+        if (noCamera){
+            int entity = this.pipeline.getRenderContext().camera.getEntity();
+            EntitySceneManager.getInstance().deleteEntity(entity);
+            noCamera = false;
+        }
         this.pipeline.getRenderContext().camera = camera;
     }
     public Camera getCamera() {

@@ -1,10 +1,12 @@
 package redegs.engine.engine.components;
+import com.google.gson.JsonObject;
 import imgui.ImGui;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3dc;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
+import redegs.engine.engine.gson.Save;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.graphics.Mesh;
@@ -31,6 +33,23 @@ public class BoundingBox extends Component {
         this.name = "BoundingBoxComponent";
         this.min = min;
         this.max = max;
+    }
+
+    @Override
+    public JsonObject Save() {
+        super.Save();
+        JsonObject o = new JsonObject();
+        o.add("min", Save.Vec3ToJson(min));
+        o.add("max", Save.Vec3ToJson(max));
+        return o;
+    }
+
+    @Override
+    public void Load(JsonObject data) {
+        super.Load(data);
+        min = Save.JsonToVec3(data.getAsJsonObject("min"));
+        max = Save.JsonToVec3(data.getAsJsonObject("max"));
+
     }
 
     @Override

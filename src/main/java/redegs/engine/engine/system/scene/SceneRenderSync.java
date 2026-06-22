@@ -18,6 +18,7 @@ public final class SceneRenderSync {
         renderer.clearLights();
         renderer.clearBillboards();
 
+
         var skybox = scene.getStore(Cubemap.class).toList();
         if (!skybox.isEmpty()) renderer.submitSkybox(skybox.get(0));
 
@@ -32,6 +33,7 @@ public final class SceneRenderSync {
         if (!scene.getStore(ControllableCamera.class).toList().isEmpty()) {
             renderer.submitCamera(scene.getStore(ControllableCamera.class).toList().getFirst());
             scene.camera = scene.getStore(ControllableCamera.class).toList().getFirst();
+
         }
 
     }

@@ -1,10 +1,12 @@
 package redegs.engine.graphics;
 
+import com.google.gson.JsonObject;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import redegs.Engine;
 import redegs.engine.engine.events.KeyPressEvent;
+import redegs.engine.engine.gson.Save;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.EntitySceneManager;
 
@@ -36,6 +38,25 @@ public class Camera extends Component {
         init(width, height);
     }
 
+    @Override
+    public JsonObject Save() {
+        super.Save();
+        JsonObject o = new JsonObject();
+        o.addProperty("width", width);
+        o.addProperty("height", height);
+        o.addProperty("fov", fov);
+        o.add("transform", transform.Save());
+        return o;
+    }
+
+    @Override
+    public void Load(JsonObject data) {
+        super.Load(data);
+        width = data.get("width").getAsInt();
+        height = data.get("height").getAsInt();
+        fov = data.get("fov").getAsFloat();
+        transform.Load(data.getAsJsonObject("transform"));
+    }
 
     private void init(int width, int height) {
         view = new Matrix4f().identity();

@@ -1,11 +1,15 @@
 package redegs.engine.graphics;
 
+import com.google.gson.JsonObject;
 import imgui.ImGui;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import redegs.engine.engine.system.EntitySceneManager;
+import redegs.engine.engine.gson.Save;
 import redegs.engine.engine.system.component.Component;
+import redegs.engine.engine.system.component.ComponentMeta;
+import redegs.engine.engine.system.component.ComponentRegistry;
 
+@ComponentMeta(name = "Transform", category = "3D", description = "Manages position, rotation and scale of an entity.")
 public class Transform extends Component {
 
     public Vector3f position = new Vector3f();
@@ -22,8 +26,34 @@ public class Transform extends Component {
     public Transform(int entity) {
         super(entity);
         this.name = "Transform";
-        EntitySceneManager.getInstance().addComponent(entity, this);
+    }
 
+    static {
+
+        ComponentRegistry.register(
+                Transform.class,
+                entity -> new Transform(entity)
+        );
+    }
+
+    @Override
+    public JsonObject Save() {
+        super.Save();
+        JsonObject o = new JsonObject();
+        o.add("position", Save.Vec3ToJson(position));
+        o.add("rotation", Save.Vec3ToJson(rotation));
+        o.add("scale", Save.Vec3ToJson(scale));
+        return o;
+    }
+
+    @Override
+    public void Load(JsonObject data) {
+        super.Load(data);
+
+        position = Save.JsonToVec3(data.getAsJsonObject("position"));
+        rotation = Save.JsonToVec3(data.getAsJsonObject("rotation"));
+        scale    = Save.JsonToVec3(data.getAsJsonObject("scale"));
+        updateModelMatrix(); // rebuild derived state immediately after load
     }
 
     public void updateModelMatrix() {
@@ -36,6 +66,10 @@ public class Transform extends Component {
                 )
                 .scale(scale)
                 .translate(originOffset);
+    }
+
+    public void setPosition(Vector3f pos) {
+        this.position.set(pos);
     }
 
     @Override

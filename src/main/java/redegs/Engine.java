@@ -15,10 +15,8 @@ import redegs.engine.engine.imgui.context.EditorUIContext;
 import redegs.engine.engine.system.*;
 import redegs.engine.engine.system.component.ComponentBootstrapper;
 import redegs.engine.engine.system.scene.Scene;
-import redegs.engine.graphics.Cubemap;
-import redegs.engine.graphics.MeshPrimitives;
-import redegs.engine.graphics.Model;
-import redegs.engine.graphics.Transform;
+import redegs.engine.engine.system.scene.SceneLoader;
+import redegs.engine.graphics.*;
 import redegs.engine.graphics.lights.DirectionalLightSource;
 import redegs.engine.graphics.lights.PointLightSource;
 import redegs.engine.graphics.pipelines.DeferredPipeline;
@@ -57,6 +55,7 @@ public class Engine {
     EntitySceneManager esm = EntitySceneManager.getInstance();
     UIManager uim;
     static Renderer<DeferredPipeline> renderer ;
+    SceneLoader loader = new SceneLoader();
 
 
     private void Init() {
@@ -130,6 +129,16 @@ public class Engine {
         glEnable(GL_FRAMEBUFFER_SRGB);
         glEnable(GL_CULL_FACE);
 
+        loader.register(Transform.class);
+        loader.register(Cubemap.class);
+        loader.register(DirectionalLightSource.class);
+        loader.register(ControllableCamera.class);
+        loader.register(Camera.class);
+        loader.register(Texture.class);
+        loader.register(Model.class);
+        loader.register(PointLightSource.class);
+
+
         uim =  UIManager.getInstance();
         uim.AddContext(new EditorUIContext());
 
@@ -150,24 +159,24 @@ public class Engine {
         camera.setPosition(new Vector3f(0, 0, 3f));
         main.addComponent(camera_id, camera);
 
-        int m_id = esm.createEntity();
-        Model m = new Model(m_id, "src/main/resources/scene.gltf");
-        main.addComponent(m_id, m);
-        m.getTransform().scale = new Vector3f(.1f);
-        m.getTransform().rotation = new Vector3f(-90, 0, 0);
-        m.centerOrigin();
-
-        //m.getTransform().position.set(0, 0, 0);
-
-        int d_id = main.createEntity();
-        var d = new DirectionalLightSource(new Vector3f(0, -10, 0), new Vector3f(.05f), new Vector3f(.5f), new Vector3f(.3f), d_id);
-        main.addComponent(d_id, d);
-
-        int c_id = main.createEntity();
-        var c = Cubemap.fromFile("src/main/resources/skybox", c_id);
-        main.addComponent(c_id, c);
+//        int m_id = esm.createEntity();
+//        Model m = new Model(m_id, "src/main/resources/scene.gltf");
+//        main.addComponent(m_id, m);
+//        m.getTransform().scale = new Vector3f(.1f);
+//        m.getTransform().rotation = new Vector3f(-90, 0, 0);
+//        m.centerOrigin();
 //
+//        m.getTransform().position.set(0, 0, 0);
 //
+//        int d_id = main.createEntity();
+//        var d = new DirectionalLightSource(new Vector3f(0, -10, 0), new Vector3f(.05f), new Vector3f(.5f), new Vector3f(.3f), d_id);
+//        main.addComponent(d_id, d);
+
+//        int c_id = main.createEntity();
+//        var c = Cubemap.fromFile("src/main/resources/skybox", c_id);
+//        main.addComponent(c_id, c);
+
+
 //        for (int i = 0; i < 1; i++) {
 //            int s = 3;
 //            Random rand = new Random();
@@ -305,6 +314,9 @@ public class Engine {
     }
     public static UIManager getUIManager() {
         return getInstance().uim;
+    }
+    public static SceneLoader getSceneLoader() {
+        return getInstance().loader;
     }
 
 }

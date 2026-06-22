@@ -3,7 +3,9 @@ package redegs.engine.graphics;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -12,7 +14,7 @@ import java.nio.file.Paths;
 
 public class Image {
     private ByteBuffer imageBuffer;
-    public BufferedImage bufferedImage;
+    public transient BufferedImage bufferedImage;
 
     public Image(String path_to_image) {
         Path path = Paths.get(path_to_image);
@@ -26,6 +28,15 @@ public class Image {
 
 
 
+    }
+
+    public Image(byte[] bytes) {
+        fromBytes(bytes);
+    }
+
+    public Image(BufferedImage image) {
+        bufferedImage = image;
+        imageBuffer = convertToRGBA(image);
     }
 
     public ByteBuffer getByteBuffer() {
@@ -61,5 +72,55 @@ public class Image {
 
         buffer.flip(); // Prepare buffer for reading
         return buffer;
+    }
+
+    public void fromBytes(byte[] bytes) {
+        try {
+            InputStream is = new ByteArrayInputStream(bytes);
+            bufferedImage = ImageIO.read(is);
+            imageBuffer = convertToRGBA(bufferedImage);
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
+
+    }
+
+    public byte[] toBytes() {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(bufferedImage, "jpg", baos);
+            byte[] bytes = baos.toByteArray();
+            return bytes;
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
+
+    }
+
+    public static byte[] toBytes(Image image) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image.bufferedImage, "jpg", baos);
+            byte[] bytes = baos.toByteArray();
+            return bytes;
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
+    }
+
+    public static byte[] toBytes(BufferedImage bufferedImage) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(bufferedImage, "jpg", baos);
+            byte[] bytes = baos.toByteArray();
+            return bytes;
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
+    }
+
+    public static byte[] empty(int width, int height) {
+        BufferedImage blankImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        return toBytes(blankImage);
     }
 }

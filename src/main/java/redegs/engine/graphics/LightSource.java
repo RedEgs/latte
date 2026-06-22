@@ -1,7 +1,9 @@
 package redegs.engine.graphics;
 
+import com.google.gson.JsonObject;
 import imgui.ImGui;
 import org.joml.Vector3f;
+import redegs.engine.engine.gson.Save;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.Component;
 
@@ -44,6 +46,25 @@ public class LightSource extends Component {
         }
         this.transform.position.set(position);
     }
+
+    @Override
+    public JsonObject Save() {
+        super.Save();
+        JsonObject o = new JsonObject();
+        o.add("position", Save.Vec3ToJson(position));
+        o.add("color", Save.Vec3ToJson(color));
+        o.addProperty("intensity", intensity);
+        return o;
+    }
+
+    @Override
+    public void Load(JsonObject data) {
+        super.Load(data);
+        position = Save.JsonToVec3(data.getAsJsonObject("position"));
+        color = Save.JsonToVec3(data.getAsJsonObject("color"));
+        intensity = data.get("intensity").getAsFloat();
+    }
+
 
     @Override
     public void OnEditorInspect() {

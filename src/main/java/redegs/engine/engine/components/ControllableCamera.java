@@ -1,5 +1,6 @@
 package redegs.engine.engine.components;
 
+import com.google.gson.JsonObject;
 import org.joml.Vector3f;
 import redegs.Engine;
 import redegs.engine.engine.events.KeyPressEvent;
@@ -17,9 +18,9 @@ public class ControllableCamera extends Camera {
 
     private double mouseX = 0.0, mouseY = 0.0;
 
-    private boolean first_mouse = true;
+    private transient boolean first_mouse = true;
     private float mouse_sensitivity = 0.1f;
-    private boolean[] keys = new boolean[GLFW_KEY_LAST + 1];
+    private transient boolean[] keys = new boolean[GLFW_KEY_LAST + 1];
 
     public ControllableCamera(int width, int height) {
         super(width, height);
@@ -34,6 +35,18 @@ public class ControllableCamera extends Camera {
 
     }
 
+    public ControllableCamera(int entity) {
+        super(Engine.getScreenWidth(), Engine.getScreenHeight(), entity);
+        name = "ControllableCameraComponent";
+        init();
+    }
+
+    public ControllableCamera() {
+        super(Engine.getScreenWidth(), Engine.getScreenHeight());
+        name = "ControllableCameraComponent";
+        init();
+    }
+
     private void init() {
         transform.rotation.y = -90.0f;
         transform.rotation.x = 0.0f;
@@ -43,6 +56,28 @@ public class ControllableCamera extends Camera {
 
         lockMouse();
         first_mouse = true;
+    }
+
+    @Override
+    public JsonObject Save() {
+        JsonObject o = new JsonObject();
+        o.addProperty("width", width);
+        o.addProperty("height", height);
+        o.addProperty("fov", fov);
+        o.addProperty("speed", speed);
+        o.addProperty("sensitivity", mouse_sensitivity);
+        o.add("transform", transform.Save());
+        return o;
+    }
+
+    @Override
+    public void Load(JsonObject data) {
+        width = data.get("width").getAsInt();
+        height = data.get("height").getAsInt();
+        fov = data.get("fov").getAsFloat();
+        speed = data.get("speed").getAsFloat();
+        mouse_sensitivity = data.get("sensitivity").getAsFloat();
+        transform.Load(data.getAsJsonObject("transform"));
     }
 
     @Override
@@ -59,7 +94,10 @@ public class ControllableCamera extends Camera {
         super.onKeyPress(event);
 
         if (event.action == GLFW_PRESS) {
-            keys[event.key] = true;
+            if (event.key < 349)
+                keys[event.key] = true;
+            else
+                return;
 
             if (event.key == GLFW_KEY_TAB) {
                 toggleMouseLock();

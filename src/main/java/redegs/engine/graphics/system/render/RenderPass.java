@@ -21,7 +21,7 @@ public class RenderPass {
         }
     }
     protected void UploadLights(RenderContext render_context, Shader shader) {
-        shader.setUniform1i("light_count", render_context.models.size());
+        shader.setUniform1i("light_count", render_context.lights.size());
         for (int i = 0; i < render_context.lights.size(); i++) {
             PointLightSource light =  render_context.lights.get(i);
             String name = "lights[" + i + "]";

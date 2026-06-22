@@ -1,19 +1,16 @@
 package redegs.engine.graphics;
 
+import com.google.gson.JsonObject;
 import imgui.ImGui;
-import imgui.ImVec2;
-import imgui.extension.imguizmo.ImGuizmo;
-import imgui.extension.imguizmo.flag.Mode;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import redegs.engine.engine.components.BoundingBox;
-import redegs.engine.engine.imgui.UIManager;
-import redegs.engine.engine.imgui.context.EditorUIContext;
+import redegs.engine.engine.gson.Save;
+import redegs.engine.engine.system.FileDialogs;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.ComponentMeta;
 import redegs.engine.engine.system.component.ComponentRegistry;
-import redegs.engine.graphics.lights.PointLightSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +25,8 @@ public class Model extends Component {
 
     // Offset applied before the transform, used by centerOrigin()
     protected final Vector3f originOffset = new Vector3f(0, 0, 0);
-    protected BoundingBox cachedBoundingBox = null;
-
+    protected transient BoundingBox cachedBoundingBox = null;
+    protected String location;
 
     public Model() {
         super(EntitySceneManager.getInstance().createEntity());
@@ -37,11 +34,6 @@ public class Model extends Component {
         init();
     }
 
-    public Model(String path) {
-        super(EntitySceneManager.getInstance().createEntity());
-        //EntitySceneManager.getInstance().addComponent(entity, this);
-        init(path);
-    }
 
     public Model(int entity) {
         super(entity);
@@ -56,30 +48,40 @@ public class Model extends Component {
     static {
         ComponentRegistry.register(
                 Model.class,
-                () -> new Model()
+                entity -> new Model(entity)
         );
+
     }
 
     public void init() {
         this.name = "ModelComponent";
+        if (location != null) {
+            this.init(location);
+        }
+
 
         this.meshes = new ArrayList<>();
         if (entityHas(Transform.class)) {
             this.transform = entityGet(Transform.class);
             _ownsTransform = false;
+
         } else {
             this.transform = new Transform(entity);
+            EntitySceneManager.getInstance().addComponent(entity, this.transform);
             _ownsTransform = true;
         }
         this.transform.model_matrix = new Matrix4f().identity();
+        updateModelMatrix();
         computeBoundingBox();
     }
 
     public void init(String path) {
         this.name = "ModelComponent";
+        this.location = path;
 
         this.meshes = new ArrayList<>();
         if (entityHas(Transform.class)) {
+            System.out.println("Found trnasfomr");
             this.transform = entityGet(Transform.class);
             _ownsTransform = false;
         } else {
@@ -99,6 +101,23 @@ public class Model extends Component {
         }
     }
 
+    @Override
+    public JsonObject Save() {
+        super.Save();
+        JsonObject o = new JsonObject();
+        o.addProperty("location", location);
+
+        return o;
+    }
+
+    @Override
+    public void Load(JsonObject data) {
+        super.Load(data);
+
+        location = data.get("location").getAsString();
+        init(location);
+    }
+
     public void Draw(Shader shader) {
         updateModelMatrix();
 
@@ -114,6 +133,15 @@ public class Model extends Component {
         for (Mesh m : meshes) {
             shader.setUniformMat4("model", getModelMatrix());
             m.DrawNoMaterials(shader);
+        }
+    }
+
+    @Override
+    public void OnUpdate() {
+        super.OnUpdate();
+        if (entityHas(Transform.class)) {
+            this.transform = entityGet(Transform.class);
+            this._ownsTransform = false;
         }
     }
 
@@ -160,6 +188,14 @@ public class Model extends Component {
 
             updateModelMatrix();
             getModelMatrix().get(modelMatrix);
+
+            ImGui.text("Location (Path): " + location); ImGui.sameLine();
+            if (ImGui.button("Load .gltf ...")) {
+                String path = FileDialogs.openFile("Select .gltf...", FileDialogs.homeDirectory(), new String[]{"*.gltf"}, ".gltf files");
+                this.location = path;
+                this.meshes.addAll(ModelLoader.load(path, entity));
+                computeBoundingBox();
+            }
 
             cachedBoundingBox.OnEditorInspect();
         }
@@ -265,6 +301,10 @@ public class Model extends Component {
     public Matrix4f getModelMatrix() {
         updateModelMatrix();
         return this.transform.model_matrix;
+    }
+
+    public String getPath() {
+        return this.location;
     }
 
     public void setModelMatrix(Matrix4f matrix) {

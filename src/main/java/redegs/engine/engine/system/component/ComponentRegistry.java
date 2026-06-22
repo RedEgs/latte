@@ -1,8 +1,8 @@
 package redegs.engine.engine.system.component;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
-
 public final class ComponentRegistry {
 
     public record Entry(
@@ -10,7 +10,7 @@ public final class ComponentRegistry {
             String category,
             String description,
             Class<? extends Component> type,
-            Supplier<Component> factory   // creates an instance with a temp entity
+            Function<Integer, Component> factory   // takes an entity ID, returns a new component for it
     ) {}
 
     private static final Map<String, Entry> BY_NAME = new LinkedHashMap<>();
@@ -18,7 +18,7 @@ public final class ComponentRegistry {
 
     private ComponentRegistry() {}
 
-    public static void register(Class<? extends Component> type, Supplier<Component> factory) {
+    public static void register(Class<? extends Component> type, Function<Integer, Component> factory) {
         ComponentMeta meta = type.getAnnotation(ComponentMeta.class);
         if (meta == null) return;
 

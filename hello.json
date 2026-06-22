@@ -1,0 +1,41 @@
+{
+  "entities": [
+    {
+      "id": 0,
+      "components": {}
+    },
+    {
+      "id": 1,
+      "components": {}
+    },
+    {
+      "id": 2,
+      "components": {
+        "ControllableCamera": {
+          "width": 1280,
+          "height": 720,
+          "fov": 1.3962634,
+          "speed": 5.0,
+          "sensitivity": 0.1,
+          "transform": {
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 3.0
+            },
+            "rotation": {
+              "x": -15.099992,
+              "y": -138.80002,
+              "z": 0.0
+            },
+            "scale": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          }
+        }
+      }
+    }
+  ]
+}

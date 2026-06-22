@@ -8,9 +8,9 @@ import java.nio.FloatBuffer;
 import java.util.List;
 
 public class Vertex {
-    public FloatBuffer Position;
-    public FloatBuffer Normal;
-    public FloatBuffer UV;
+    public transient FloatBuffer Position;
+    public transient FloatBuffer Normal;
+    public transient FloatBuffer UV;
 
     public static Vertex createVertex(float px, float py, float pz,
                                        float nx, float ny, float nz,

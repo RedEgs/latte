@@ -1,5 +1,6 @@
 package redegs.engine.engine.system.component;
 
+import com.google.gson.JsonObject;
 import redegs.engine.engine.system.EntitySceneManager;
 
 public class Component {
@@ -29,6 +30,15 @@ public class Component {
     public void OnEditorDeselect() {}
 
     public void OnDelete() {}
+
+    public JsonObject Save() {
+        return new JsonObject();
+    }
+
+    /** Restore this component's state from JSON produced by Save(). Default: no-op. */
+    public void Load(JsonObject data) {
+        // no-op by default — components with no save-worthy state don't need to override
+    }
 
     public String getName(){
         return name;

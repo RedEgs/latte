@@ -14,12 +14,12 @@ import static org.lwjgl.opengl.GL11C.*;
 
 public class Mesh {
     protected List<Vertex> vertices;
-    protected IntBuffer indices;
-    protected ArrayList<Material> materials;
+    protected transient IntBuffer indices;
+    protected transient ArrayList<Material> materials;
 
-    protected VertexArray vao;
-    protected VertexBuffer vbo;
-    protected ElementBuffer ebo;
+    protected transient VertexArray vao;
+    protected transient VertexBuffer vbo;
+    protected transient ElementBuffer ebo;
 
     public Mesh(List<Vertex> vertices, IntBuffer indices, ArrayList<Material> materials) {
         this.vertices = vertices;

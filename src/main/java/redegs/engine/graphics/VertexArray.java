@@ -4,7 +4,7 @@ import static org.lwjgl.opengl.ARBVertexArrayObject.glBindVertexArray;
 import static org.lwjgl.opengl.ARBVertexArrayObject.glGenVertexArrays;
 
 public class VertexArray {
-    private int id;
+    private transient int id;
 
     public VertexArray() {
         this.id = glGenVertexArrays();

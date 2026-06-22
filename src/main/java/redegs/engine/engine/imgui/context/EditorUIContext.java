@@ -2,22 +2,25 @@ package redegs.engine.engine.imgui.context;
 
 import imgui.ImGui;
 import imgui.ImGuiTextFilter;
+import imgui.ImVec4;
 import imgui.extension.imguizmo.ImGuizmo;
 import imgui.extension.imguizmo.flag.Mode;
 import imgui.extension.imguizmo.flag.Operation;
+import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImBoolean;
-import org.joml.Matrix4f;
-import org.lwjgl.glfw.GLFW;
+import imgui.type.ImString;
 import redegs.Engine;
 import redegs.engine.engine.events.KeyPressEvent;
 import redegs.engine.engine.imgui.UIContext;
 import redegs.engine.engine.imgui.UIManager;
 import redegs.engine.engine.system.EntitySceneManager;
+import redegs.engine.engine.system.FileDialogs;
 import redegs.engine.engine.system.PerformanceMetricManager;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.component.ComponentRegistry;
-import redegs.engine.graphics.Model;
+import redegs.engine.engine.system.scene.Scene;
+import redegs.engine.engine.system.scene.SceneLoader;
 import redegs.engine.graphics.Transform;
 
 import java.util.HashMap;
@@ -27,19 +30,46 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class EditorUIContext extends UIContext {
     EntitySceneManager esm = EntitySceneManager.getInstance();
-
     public boolean hidden = false;
 
     private int selected_entity = -1;
-    private HashMap<Integer, ImBoolean> selected_entities = new HashMap<>();
+    private HashMap<Integer, HashMap<String, ImBoolean>> selected_entities = new HashMap<>();
     private ImBoolean display_empty_entities = new ImBoolean(false);
 
     protected int currentMode = Mode.LOCAL;
     protected int currentOperation = Operation.TRANSLATE;
 
+
+    protected ImString filenameSaveAs = new ImString();
+    protected boolean openSaveAs = false;
+
     protected ImGuiTextFilter componentTextFiler = new ImGuiTextFilter();
 
     public EditorUIContext() {}
+
+    ImBoolean getEntitySelectedRef(int id) {
+        return selected_entities.get(id).get("Selected");
+    }
+    ImBoolean getEntityDeletedRef(int id) {
+        return selected_entities.get(id).get("Deleted");
+    }
+
+    Boolean isEntitySelected(int id) {
+        return selected_entities.get(id).get("Selected").get();
+    }
+
+    Boolean isEntityDeleted(int id) {
+        return selected_entities.get(id).get("Deleted").get();
+    }
+
+    void setEntitySelected(int id, boolean val) {
+        selected_entities.get(id).get("Selected").set(val);
+    }
+
+    void setEntityDeleted(int id, boolean val) {
+        selected_entities.get(id).get("Deleted").set(val);
+    }
+
 
     @Override
     public void onKeyPress(KeyPressEvent event) {
@@ -64,22 +94,60 @@ public class EditorUIContext extends UIContext {
 
         PerformanceMetricManager pfm =  PerformanceMetricManager.getInstance();
 
+
+
+
         if (ImGui.beginMainMenuBar()) {
             if (ImGui.beginMenu("File")) {
-                if (ImGui.menuItem("Create")) {
+                if (ImGui.beginMenu("Create...")) {
+                    if (ImGui.menuItem("New Scene")) {
+                        Scene scene = new Scene();
+                        EntitySceneManager.getInstance().AddScene(scene, "new");
+                        EntitySceneManager.getInstance().SetScene("new");
+                    }
+                    ImGui.endMenu();
                 }
                 if (ImGui.menuItem("Open", "Ctrl+O")) {
+                    try {
+                        String path = FileDialogs.openFile("Select Scene", FileDialogs.homeDirectory(), new String[]{"*.json"}, "Select .json");
+                        Scene scene = Engine.getSceneLoader().LoadScene(path);
+                        EntitySceneManager.getInstance().AddScene(scene, path);
+                        EntitySceneManager.getInstance().SetScene(path);
+
+                    } catch (Exception e) {
+                        System.err.println(e);
+                    }
+                }
+                if (ImGui.menuItem("Open Recent")) {
+                    try {
+                        Scene scene = Engine.getSceneLoader().LoadScene("recent.json");
+                        EntitySceneManager.getInstance().AddScene(scene, "recent");
+                        EntitySceneManager.getInstance().SetScene("recent");
+                    } catch (Exception e) {
+                        System.err.println(e);
+                    }
                 }
                 if (ImGui.menuItem("Save", "Ctrl+S")) {
-                }
-                if (ImGui.menuItem("Save as..")) {
-                }
-                if (ImGui.menuItem("Window")) {
+                    try {
+                        Engine.getSceneLoader().SaveScene(esm.GetScene(), "recent.json");
+                    } catch (Exception e) {
+                        System.err.println(e);
+                    }
 
                 }
+                if (ImGui.menuItem("Save as..")) {
+                    String loc = FileDialogs.saveFile("Save scene...", FileDialogs.homeDirectory(), new String[]{"*.json"}, "Scene Location");
+                    try {
+                        Engine.getSceneLoader().SaveScene(EntitySceneManager.getInstance().GetScene(), loc);
+                    } catch (Exception e) {
+                        throw new RuntimeException();
+                    }
+                }
+
                 ImGui.endMenu();
             }
             ImGui.endMainMenuBar();
+
         }
 
         if (ImGui.begin("Scene Hierarchy")) {
@@ -92,8 +160,12 @@ public class EditorUIContext extends UIContext {
             if (ImGui.collapsingHeader("Scene Hierarchy")) {
                 if (ImGui.beginPopupContextWindow()) {
                     if (ImGui.button("Create Entity")) {
+                        HashMap hm = new HashMap<>();
+                        hm.put("Selected", new ImBoolean(true));
+                        hm.put("Deleted", new ImBoolean(false));
+
                         selected_entity = esm.createEntity();
-                        selected_entities.put(selected_entity, new ImBoolean(true));
+                        selected_entities.put(selected_entity, hm);
 
                         ImGui.closeCurrentPopup();
                     }
@@ -105,12 +177,16 @@ public class EditorUIContext extends UIContext {
                 for (int i = 0; i < esm.GetScene().getEntities(); i++) {
                     // If entity has no components and we don't want to display them.
                     if (esm.GetScene().getComponents(i).isEmpty() && !display_empty_entities.get() && selected_entity != i) continue;
-
                     if (selected_entities.get(i) == null) {
-                        selected_entities.put(i, new ImBoolean(false));
-                    }
+                        HashMap hm = new HashMap<>();
+                        hm.put("Selected", new ImBoolean(false));
+                        hm.put("Deleted", new ImBoolean(false));
+                        selected_entities.put(i, hm);
 
-                    if (ImGui.selectable("Entity " + String.valueOf(i), selected_entities.get(i))) {
+                    }
+                    if (isEntityDeleted(i)) continue;
+
+                    if (ImGui.selectable("Entity " + i, getEntitySelectedRef(i))) {
                         if (selected_entity != -1) {
                             List<?> components = esm.GetScene().getComponents(selected_entity);
                             if (!components.isEmpty()) {
@@ -152,13 +228,13 @@ public class EditorUIContext extends UIContext {
 
                         for (Integer x: selected_entities.keySet()) {
                             if (x == i) continue;
-
-                            selected_entities.get(x).set(false);
+                            setEntitySelected(x, false);
                         }
                     }
                     if (ImGui.beginPopupContextItem()) {
                         if (ImGui.button("Delete Entity")) {
                             esm.deleteEntity(i);
+                            setEntityDeleted(i, true);
                         }
 
                         ImGui.endPopup();
@@ -253,7 +329,7 @@ public class EditorUIContext extends UIContext {
                             if (ImGui.beginMenu(category)) {
                                 for (ComponentRegistry.Entry entry : ComponentRegistry.byCategory(category)) {
                                     if (ImGui.menuItem(entry.name())) {
-                                        Component c = entry.factory().get();
+                                        Component c = entry.factory().apply(selected_entity);
                                         esm.addComponent(selected_entity, c);
                                     }
                                     if (ImGui.isItemHovered()) {

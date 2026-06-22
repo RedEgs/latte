@@ -1,15 +1,20 @@
 package redegs.engine.graphics.lights;
 
+import com.google.gson.JsonObject;
 import imgui.ImGui;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import redegs.engine.engine.gson.Save;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.component.ComponentMeta;
+import redegs.engine.engine.system.component.ComponentRegistry;
 import redegs.engine.graphics.Transform;
 
 @ComponentMeta(name = "Directional Light", category = "Lighting", description = "A directional light source.")
 public class DirectionalLightSource extends Component {
+
+
     public Vector3f direction;
     public Vector3f ambient;
     public Vector3f diffuse;
@@ -59,6 +64,72 @@ public class DirectionalLightSource extends Component {
             _ownsTransform = true;
         }
         initRotationFromDirection();
+    }
+
+    public DirectionalLightSource(int entity) {
+        super(entity);
+        name = "DirectionalLightSourceComponent";
+
+        this.direction = new Vector3f(0, 0, 0);
+        this.ambient = new Vector3f(0, 0, 0);;
+        this.diffuse = new Vector3f(0, 0, 0);;
+        this.specular = new Vector3f(0, 0, 0);;
+
+        if (entityHas(Transform.class)) {
+            this.transform = entityGet(Transform.class);
+            _ownsTransform = false;
+        } else {
+            this.transform = new Transform(entity);
+            _ownsTransform = true;
+        }
+        initRotationFromDirection();
+    }
+
+    public DirectionalLightSource() {
+        super(EntitySceneManager.getInstance().createEntity());
+        name = "DirectionalLightSourceComponent";
+
+        this.direction = new Vector3f(0, 0, 0);
+        this.ambient = new Vector3f(0, 0, 0);;
+        this.diffuse = new Vector3f(0, 0, 0);;
+        this.specular = new Vector3f(0, 0, 0);;
+
+        if (entityHas(Transform.class)) {
+            this.transform = entityGet(Transform.class);
+            _ownsTransform = false;
+        } else {
+            this.transform = new Transform(entity);
+            _ownsTransform = true;
+        }
+        initRotationFromDirection();
+    }
+
+    static {
+        ComponentRegistry.register(
+                DirectionalLightSource.class,
+                entity -> new DirectionalLightSource(new Vector3f(0), new Vector3f(.5f), new Vector3f(.5f), new Vector3f(.5f), entity)
+        );
+    }
+
+    @Override
+    public JsonObject Save() {
+        super.Save();
+        JsonObject o = new JsonObject();
+        o.add("direction", Save.Vec3ToJson(direction));
+        o.add("ambient", Save.Vec3ToJson(ambient));
+        o.add("diffuse", Save.Vec3ToJson(diffuse));
+        o.add("specular", Save.Vec3ToJson(specular));
+        return o;
+    }
+
+    @Override
+    public void Load(JsonObject data) {
+        super.Load(data);
+        direction = Save.JsonToVec3(data.getAsJsonObject("direction"));
+        ambient = Save.JsonToVec3(data.getAsJsonObject("ambient"));
+        diffuse    = Save.JsonToVec3(data.getAsJsonObject("diffuse"));
+        specular    = Save.JsonToVec3(data.getAsJsonObject("specular"));
+
     }
 
     /**

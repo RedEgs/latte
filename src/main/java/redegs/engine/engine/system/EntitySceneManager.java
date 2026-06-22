@@ -10,9 +10,10 @@ import redegs.engine.engine.system.scene.SceneRenderSync;
 import redegs.engine.graphics.system.render.Renderer;
 
 import java.util.*;
+import java.util.function.Function;
+
 
 public final class EntitySceneManager {
-
     private static EntitySceneManager INSTANCE;
 
     private final SceneRegistry sceneRegistry = new SceneRegistry();
@@ -153,6 +154,7 @@ public final class EntitySceneManager {
 
                 removeComponent(entity, comp.getClass());
             }
+
             return;
         }
 
@@ -210,6 +212,7 @@ public final class EntitySceneManager {
             staging.getStore(type).remove(entity);
         }
     }
+
 
     public int getEntities() {
         Scene scene = sceneRegistry.getCurrentScene();

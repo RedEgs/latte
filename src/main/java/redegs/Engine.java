@@ -1,5 +1,6 @@
 package redegs;
 
+import com.sun.tools.javac.Main;
 import org.joml.Random;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -12,6 +13,7 @@ import redegs.engine.engine.events.KeyPressEvent;
 import redegs.engine.engine.imgui.UIContext;
 import redegs.engine.engine.imgui.UIManager;
 import redegs.engine.engine.imgui.context.EditorUIContext;
+import redegs.engine.engine.script.Script;
 import redegs.engine.engine.system.*;
 import redegs.engine.engine.system.component.ComponentBootstrapper;
 import redegs.engine.engine.system.scene.Scene;
@@ -25,7 +27,10 @@ import redegs.engine.util.GLException;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
 
+import java.io.File;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -45,8 +50,11 @@ public class Engine {
     private final ImGuiImplGlfw glfw = new ImGuiImplGlfw();
     private final ImGuiImplGl3 gl3 = new ImGuiImplGl3();
 
+    private Boolean gameMode = false;
+    private Boolean editorMode = true;
     private final Float version = 0.2f;
-    private final String name = "Latte" + " " + version;
+    private String name = "Latte" + " " + version + " (DevEnabled = " + editorMode + ")";
+
 
     private int screenWidth = 1280;
     private int screenHeight = 720;
@@ -108,7 +116,7 @@ public class Engine {
 
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
-        glfwSwapInterval(1);
+        glfwSwapInterval(0);
         glfwShowWindow(window);
 
         //input = Input.getInstance();
@@ -138,10 +146,12 @@ public class Engine {
         loader.register(Model.class);
         loader.register(PointLightSource.class);
         loader.register(Billboard.class);
+        loader.register(Script.class);
 
 
         uim =  UIManager.getInstance();
-        uim.AddContext(new EditorUIContext());
+        if (editorMode)
+            uim.AddContext(new EditorUIContext());
 
     }
 
@@ -150,15 +160,30 @@ public class Engine {
         renderer= new Renderer<>(DeferredPipeline::new);
         esm.setRenderer(renderer);
 
+        String scene_path = System.getProperty("engine.scenePath");
         Scene main = new Scene() {};
         esm.AddScene(main, "main");
 
         renderer.BuildPipeline();
+//
+        if (editorMode) {
+            int camera_id = esm.createEntity();
+            ControllableCamera camera = new ControllableCamera(screenWidth, screenHeight, camera_id);
+            camera.setPosition(new Vector3f(0, 0, 3f));
+            esm.addComponent(camera_id, camera);
+        }
 
-        int camera_id = esm.createEntity();
-        ControllableCamera camera = new ControllableCamera(screenWidth, screenHeight, camera_id);
-        camera.setPosition(new Vector3f(0, 0, 3f));
-        main.addComponent(camera_id, camera);
+        if (scene_path != null) {
+            try {
+                Scene loaded = getSceneLoader().LoadScene(scene_path);
+                esm.AddScene(loaded, "loaded");
+                esm.SetScene("loaded");
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+
+
 
 //        int m_id = esm.createEntity();
 //        Model m = new Model(m_id, "src/main/resources/scene.gltf");
@@ -228,6 +253,9 @@ public class Engine {
     }
 
     public void Run() throws GLException {
+        editorMode = Boolean.getBoolean("engine.editorMode");
+        gameMode = !editorMode;
+        name = "Latte" + " " + version + " (DevEnabled = " + editorMode + ")";
         Init();
         Loop();
 
@@ -252,11 +280,6 @@ public class Engine {
     }
 
 
-
-    public static void main(String[] args) throws Exception {
-        Engine.getInstance().Run();
-    }
-
     public static void onKeyPress(KeyPressEvent event) {
         EntitySceneManager esm = EntitySceneManager.getInstance();
         if (esm.GetScene().camera != null) {
@@ -278,6 +301,34 @@ public class Engine {
 
 
     }
+
+    public static void play(boolean editorMode, String scene_path) throws Exception {
+        String java = System.getProperty("java.home")
+                + File.separator + "bin"
+                + File.separator + "java";
+
+        String classpath = System.getProperty("java.class.path");
+
+        List<String> command = new ArrayList<>();
+
+        command.add(java);
+        command.add("-Dengine.editorMode=" + editorMode);
+        command.add("-Dengine.scenePath=" + scene_path);
+        command.add("-cp");
+        command.add(classpath);
+        command.add(Engine.class.getName());
+
+        new ProcessBuilder(command)
+                .inheritIO()
+                .start();
+
+        System.exit(0);
+    }
+
+    public static void main(String[] args) throws Exception {
+        Engine.getInstance().Run();
+    }
+
 
     public static int getScreenWidth() {
         return getInstance().screenWidth;
@@ -318,6 +369,12 @@ public class Engine {
     }
     public static SceneLoader getSceneLoader() {
         return getInstance().loader;
+    }
+    public static Boolean getGameMode() {
+        return getInstance().gameMode;
+    }
+    public static void setGameMode(boolean value) {
+        getInstance().gameMode = value;
     }
 
 }

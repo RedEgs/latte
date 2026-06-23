@@ -6,14 +6,20 @@ import imgui.ImVec4;
 import imgui.extension.imguizmo.ImGuizmo;
 import imgui.extension.imguizmo.flag.Mode;
 import imgui.extension.imguizmo.flag.Operation;
+import imgui.extension.texteditor.TextEditor;
+import imgui.extension.texteditor.TextEditorLanguage;
+import imgui.extension.texteditor.flag.TextEditorColor;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImBoolean;
 import imgui.type.ImString;
+import org.luaj.vm2.LuaError;
 import redegs.Engine;
 import redegs.engine.engine.events.KeyPressEvent;
 import redegs.engine.engine.imgui.UIContext;
 import redegs.engine.engine.imgui.UIManager;
+import redegs.engine.engine.script.Script;
+import redegs.engine.engine.script.ScriptAPI;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.FileDialogs;
 import redegs.engine.engine.system.PerformanceMetricManager;
@@ -23,6 +29,10 @@ import redegs.engine.engine.system.scene.Scene;
 import redegs.engine.engine.system.scene.SceneLoader;
 import redegs.engine.graphics.Transform;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 
@@ -39,11 +49,13 @@ public class EditorUIContext extends UIContext {
     protected int currentMode = Mode.LOCAL;
     protected int currentOperation = Operation.TRANSLATE;
 
-
     protected ImString filenameSaveAs = new ImString();
     protected boolean openSaveAs = false;
 
     protected ImGuiTextFilter componentTextFiler = new ImGuiTextFilter();
+
+    protected HashMap<Script, TextEditor> scriptEditors = new HashMap<>();
+
 
     public EditorUIContext() {}
 
@@ -146,6 +158,33 @@ public class EditorUIContext extends UIContext {
 
                 ImGui.endMenu();
             }
+            if (ImGui.beginMenu("Test")) {
+               if (ImGui.menuItem("Play")) {
+                   try {
+                       Engine.getSceneLoader().SaveScene(EntitySceneManager.getInstance().GetScene(), "recent_test.json");
+                       Engine.play(false, "recent_test.json");
+                   } catch (Exception e) {
+                       System.err.println("Couldn't launch in play mode");
+                   }
+               }
+               if (Engine.getGameMode()) {
+                   if (ImGui.menuItem("Stop Testing")) {
+                       Engine.setGameMode(false);
+                   }
+               } else {
+                   if (ImGui.menuItem("Start Testing")) {
+                       Engine.setGameMode(true);
+                   }
+               }
+
+
+               ImGui.endMenu();
+            }
+            if (Engine.getGameMode()) {
+                if (ImGui.menuItem("Stop Testing")) {
+                    Engine.setGameMode(false);
+                }
+            }
             ImGui.endMainMenuBar();
 
         }
@@ -214,6 +253,13 @@ public class EditorUIContext extends UIContext {
                                 try{
                                     Component r = (Component) c;
                                     r.OnEditorSelect();
+                                    if (c instanceof Script s) {
+                                        if (scriptEditors.get(s) == null)
+                                            scriptEditors.put(s, new TextEditor());
+
+                                        TextEditor editor = scriptEditors.get(s);
+                                        editor.setText(s.getSource());
+                                    }
 
 
                                 } catch (Exception e) {
@@ -296,6 +342,48 @@ public class EditorUIContext extends UIContext {
                                             m.updateModelMatrix(); // force rebuild of the matrix from transform
 
                                         }
+                                    }
+                                    else if (c instanceof Script s) {
+                                        if (scriptEditors.get(s) == null)
+                                            scriptEditors.put(s, new TextEditor());
+                                        TextEditor editor = scriptEditors.get(s);
+                                        editor.setLanguage(TextEditorLanguage.Lua());
+                                        editor.setPaletteColor(TextEditorColor.currentLineNumber, 0xFFFFC080);
+
+                                        if (ImGui.button("Load")) {
+                                            if (s.isLoaded())
+                                                editor.setText(s.getSource());
+                                        } ImGui.sameLine();
+                                        if (ImGui.button("Save")) {
+                                            try {
+                                                Files.writeString(Paths.get(s.getLocation()), editor.getText(), StandardCharsets.UTF_8);
+                                            } catch (Exception e) {
+                                                throw new RuntimeException("Failed to save script editor to lua file path: " + s.getLocation());
+                                            }
+                                        } ImGui.sameLine();
+                                        if (ImGui.button("Rebuild")) {
+                                            LuaError e = s.rebuild();
+                                            if (e != null) {
+                                                Integer ln = ScriptAPI.getErrorLine(e);
+                                                if (ln != null)
+                                                    editor.addMarker(ln, 0xff0000, 0xff0000, e.getMessage());
+                                            } else {
+                                                editor.clearMarkers();
+                                            }
+                                        } ImGui.sameLine();
+                                        if (ImGui.button("Save & Rebuild")) {
+                                            try {
+                                                Files.writeString(Paths.get(s.getLocation()), editor.getText(), StandardCharsets.UTF_8);
+                                            } catch (Exception e) {
+                                                throw new RuntimeException("Failed to save script editor to lua file path: " + s.getLocation());
+                                            }
+                                            s.rebuild();
+                                        }
+
+                                        editor.render(s.getScriptName());
+                                        ImGui.separator();
+                                        ImGui.spacing();
+
                                     }
                                 };
                                 ImGui.unindent(16.0f);

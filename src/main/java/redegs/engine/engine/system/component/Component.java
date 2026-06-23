@@ -1,8 +1,10 @@
 package redegs.engine.engine.system.component;
 
 import com.google.gson.JsonObject;
+import org.joml.Vector3f;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.graphics.Shader;
+import redegs.engine.graphics.lights.DirectionalLightSource;
 
 public class Component {
     protected String name;
@@ -11,6 +13,13 @@ public class Component {
     public Component(int entity) {
         this.entity = entity;
         this.name = "GenericComponent";
+    }
+
+    static {
+        ComponentRegistry.register(
+                Component.class,
+                entity -> new Component(entity)
+        );
     }
 
     public void OnUpdate() {}

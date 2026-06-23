@@ -60,7 +60,7 @@ public class BillboardPass extends RenderPass {
         });
 
         for (Billboard billboard : sorted) {
-            if (billboard.getOnTop()) {
+            if (billboard.getOntop()) {
                 glDisable(GL_DEPTH);
                 billboard.Draw(shader);
                 glEnable(GL_DEPTH);

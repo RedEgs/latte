@@ -77,6 +77,18 @@ public class Texture extends Component {
 
         setup = true;
     }
+    private Texture(int entity) {
+        super(entity);
+        name = "TextureComponent";
+
+        id = glGenTextures();
+        texture_type = TextureType.IMAGE;
+        attachment_type = null;
+
+        setup = false;
+
+
+    }
     public Texture(int width, int height, AttachmentType attachment_type, int entity) {
         super(entity);
         name = "TextureComponent";
@@ -190,6 +202,12 @@ public class Texture extends Component {
                 fromBytes(bytes, texture_type, face);
             }
         }
+    }
+
+    public static Texture fromJson(JsonObject data, int entity) {
+        Texture t = new Texture(entity);
+        t.Load(data);
+        return  t;
     }
 
     public void bind() {

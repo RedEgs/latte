@@ -9,7 +9,6 @@ import redegs.engine.graphics.system.render.RenderContext;
 import redegs.engine.graphics.system.render.RenderPass;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -149,7 +148,7 @@ public class DebugPass extends RenderPass {
         });
 
         for (Billboard billboard : sorted) {
-            if (billboard.getOnTop()) {
+            if (billboard.getOntop()) {
                 glDisable(GL_DEPTH);
                 billboard.Draw(shader);
                 glEnable(GL_DEPTH);

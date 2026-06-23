@@ -2,6 +2,7 @@ package redegs.engine.engine.system.component;
 
 import com.google.gson.JsonObject;
 import redegs.engine.engine.system.EntitySceneManager;
+import redegs.engine.graphics.Shader;
 
 public class Component {
     protected String name;
@@ -30,6 +31,8 @@ public class Component {
     public void OnEditorDeselect() {}
 
     public void OnDelete() {}
+
+    public void Draw(Shader shader) {}
 
     public JsonObject Save() {
         return new JsonObject();

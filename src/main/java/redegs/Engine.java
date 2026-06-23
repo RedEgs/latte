@@ -137,6 +137,7 @@ public class Engine {
         loader.register(Texture.class);
         loader.register(Model.class);
         loader.register(PointLightSource.class);
+        loader.register(Billboard.class);
 
 
         uim =  UIManager.getInstance();

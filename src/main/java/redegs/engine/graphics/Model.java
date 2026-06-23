@@ -30,10 +30,8 @@ public class Model extends Component {
 
     public Model() {
         super(EntitySceneManager.getInstance().createEntity());
-        //EntitySceneManager.getInstance().addComponent(entity, this);
         init();
     }
-
 
     public Model(int entity) {
         super(entity);
@@ -50,38 +48,39 @@ public class Model extends Component {
                 Model.class,
                 entity -> new Model(entity)
         );
-
     }
 
     public void init() {
         this.name = "ModelComponent";
-        if (location != null) {
-            this.init(location);
-        }
-
-
         this.meshes = new ArrayList<>();
+
         if (entityHas(Transform.class)) {
             this.transform = entityGet(Transform.class);
             _ownsTransform = false;
-
         } else {
             this.transform = new Transform(entity);
             EntitySceneManager.getInstance().addComponent(entity, this.transform);
             _ownsTransform = true;
         }
+
         this.transform.model_matrix = new Matrix4f().identity();
         updateModelMatrix();
-        computeBoundingBox();
+
+        // Only compute bounding box if we actually have meshes (e.g. loaded via location)
+        if (location != null) {
+            init(location);
+        } else {
+            invalidateBoundingBox();
+            computeBoundingBox();
+        }
     }
 
     public void init(String path) {
         this.name = "ModelComponent";
         this.location = path;
-
         this.meshes = new ArrayList<>();
+
         if (entityHas(Transform.class)) {
-            System.out.println("Found trnasfomr");
             this.transform = entityGet(Transform.class);
             _ownsTransform = false;
         } else {
@@ -89,12 +88,12 @@ public class Model extends Component {
             EntitySceneManager.getInstance().addComponent(entity, this.transform);
             _ownsTransform = true;
         }
+
         this.transform.model_matrix = new Matrix4f().identity();
 
-
-        // Try to load with Assimp first, fall back to OBJ loader
         try {
             this.meshes.addAll(ModelLoader.load(path, entity));
+            invalidateBoundingBox();  // clear any stale cache before recomputing
             computeBoundingBox();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -106,21 +105,18 @@ public class Model extends Component {
         super.Save();
         JsonObject o = new JsonObject();
         o.addProperty("location", location);
-
         return o;
     }
 
     @Override
     public void Load(JsonObject data) {
         super.Load(data);
-
         location = data.get("location").getAsString();
         init(location);
     }
 
     public void Draw(Shader shader) {
         updateModelMatrix();
-
         for (Mesh m : meshes) {
             shader.setUniformMat4("model", getModelMatrix());
             m.Draw(shader);
@@ -129,7 +125,6 @@ public class Model extends Component {
 
     public void DrawNoMaterials(Shader shader) {
         updateModelMatrix();
-
         for (Mesh m : meshes) {
             shader.setUniformMat4("model", getModelMatrix());
             m.DrawNoMaterials(shader);
@@ -139,10 +134,13 @@ public class Model extends Component {
     @Override
     public void OnUpdate() {
         super.OnUpdate();
+        // Sync transform reference if another component owns it
         if (entityHas(Transform.class)) {
             this.transform = entityGet(Transform.class);
             this._ownsTransform = false;
         }
+        // Note: bounding box is NOT recomputed here — call invalidateBoundingBox()
+        // + computeBoundingBox() explicitly if mesh geometry changes at runtime.
     }
 
     @Override
@@ -159,7 +157,6 @@ public class Model extends Component {
         if (_renderInDebug) {
             EntitySceneManager.getInstance().getRenderer().selectModel(this);
         }
-
     }
 
     @Override
@@ -167,10 +164,8 @@ public class Model extends Component {
         super.OnEditorDeselect();
         if (_renderInDebug) {
             EntitySceneManager.getInstance().getRenderer().selectModel(null);
-
         }
     }
-
 
     @Override
     public void OnEditorInspect() {
@@ -189,15 +184,19 @@ public class Model extends Component {
             updateModelMatrix();
             getModelMatrix().get(modelMatrix);
 
-            ImGui.text("Location (Path): " + location); ImGui.sameLine();
+            ImGui.text("Location (Path): " + location);
+            ImGui.sameLine();
             if (ImGui.button("Load .gltf ...")) {
                 String path = FileDialogs.openFile("Select .gltf...", FileDialogs.homeDirectory(), new String[]{"*.gltf"}, ".gltf files");
                 this.location = path;
                 this.meshes.addAll(ModelLoader.load(path, entity));
+                invalidateBoundingBox();
                 computeBoundingBox();
             }
 
-            cachedBoundingBox.OnEditorInspect();
+            if (cachedBoundingBox != null) {
+                cachedBoundingBox.OnEditorInspect();
+            }
         }
     }
 
@@ -219,7 +218,6 @@ public class Model extends Component {
     }
 
     public void centerOrigin() {
-        // 1. Accumulate all vertex positions across all meshes
         Vector3f sum = new Vector3f(0, 0, 0);
         int totalVertices = 0;
 
@@ -235,14 +233,14 @@ public class Model extends Component {
 
         if (totalVertices == 0) return;
 
-        // 2. Calculate centroid
         Vector3f centroid = sum.div(totalVertices);
-
-        // 3. Store negative centroid as a permanent offset, applied
-        //    every time updateModelMatrix() rebuilds the matrix.
         originOffset.set(-centroid.x, -centroid.y, -centroid.z);
     }
 
+    /**
+     * Computes the bounding box in local (mesh) space.
+     * Call invalidateBoundingBox() first if meshes have changed.
+     */
     public BoundingBox computeBoundingBox() {
         if (cachedBoundingBox != null) return cachedBoundingBox;
 
@@ -265,17 +263,51 @@ public class Model extends Component {
         return cachedBoundingBox;
     }
 
+    /**
+     * Returns the bounding box transformed into world space by the current model matrix.
+     * Use this for rendering the debug box or any world-space intersection tests.
+     * The local cachedBoundingBox is used as the source — call computeBoundingBox() first.
+     */
+    public BoundingBox getWorldBoundingBox() {
+        if (cachedBoundingBox == null) computeBoundingBox();
 
+        Matrix4f model = getModelMatrix();
 
-    // call this if you ever modify the mesh vertices at runtime
+        Vector3f localMin = cachedBoundingBox.min;
+        Vector3f localMax = cachedBoundingBox.max;
+
+        // Transform all 8 corners of the local AABB into world space,
+        // then find the new axis-aligned min/max that contains them all.
+        Vector3f[] corners = {
+                new Vector3f(localMin.x, localMin.y, localMin.z),
+                new Vector3f(localMax.x, localMin.y, localMin.z),
+                new Vector3f(localMin.x, localMax.y, localMin.z),
+                new Vector3f(localMax.x, localMax.y, localMin.z),
+                new Vector3f(localMin.x, localMin.y, localMax.z),
+                new Vector3f(localMax.x, localMin.y, localMax.z),
+                new Vector3f(localMin.x, localMax.y, localMax.z),
+                new Vector3f(localMax.x, localMax.y, localMax.z),
+        };
+
+        Vector3f worldMin = new Vector3f(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
+        Vector3f worldMax = new Vector3f(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE);
+
+        for (Vector3f corner : corners) {
+            model.transformPosition(corner);
+            worldMin.min(corner);
+            worldMax.max(corner);
+        }
+
+        return new BoundingBox(worldMin, worldMax, entity);
+    }
+
     public void invalidateBoundingBox() {
         cachedBoundingBox = null;
     }
 
-
-
     public void addMesh(Mesh mesh) {
         this.meshes.add(mesh);
+        invalidateBoundingBox();
         computeBoundingBox();
     }
 
@@ -286,14 +318,15 @@ public class Model extends Component {
     public static Model fromMesh(Mesh mesh) {
         Model m = new Model();
         m.meshes.add(mesh);
+        m.invalidateBoundingBox();
         m.computeBoundingBox();
-
         return m;
     }
 
     public BoundingBox getBoundingBox() {
         return cachedBoundingBox;
     }
+
     public Transform getTransform() {
         return transform;
     }

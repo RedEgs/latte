@@ -8,11 +8,14 @@ import redegs.Engine;
 import redegs.engine.engine.events.KeyPressEvent;
 import redegs.engine.engine.gson.Save;
 import redegs.engine.engine.system.component.Component;
+import redegs.engine.engine.system.component.ComponentMeta;
+import redegs.engine.engine.system.component.ComponentRegistry;
 import redegs.engine.engine.system.EntitySceneManager;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_DISABLED;
 
+@ComponentMeta(name = "Camera", category = "Camera", description = "A scene camera.")
 public class Camera extends Component {
     protected Matrix4f view;
     protected Matrix4f projection;
@@ -36,6 +39,17 @@ public class Camera extends Component {
         name = "CameraComponent";
 
         init(width, height);
+    }
+
+    public Camera(int entity) {
+        this(Engine.getScreenWidth(), Engine.getScreenHeight(), entity);
+    }
+
+    static {
+        ComponentRegistry.register(
+                Camera.class,
+                entity -> new Camera(entity)
+        );
     }
 
     @Override
@@ -68,7 +82,7 @@ public class Camera extends Component {
             _ownsTransform = false;
         } else {
             this.transform = new Transform(entity);
-            EntitySceneManager.getInstance().addComponent(entity, this);
+            EntitySceneManager.getInstance().addComponent(entity, this.transform);
             _ownsTransform = true;
         }
 

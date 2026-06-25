@@ -6,6 +6,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import redegs.engine.engine.components.Billboard;
+import redegs.engine.engine.components.BoundingBox;
 import redegs.engine.engine.components.ControllableCamera;
 import redegs.engine.engine.events.KeyPressEvent;
 import redegs.engine.engine.imgui.UIContext;
@@ -145,6 +146,7 @@ public class Engine {
         loader.register(Model.class);
         loader.register(PointLightSource.class);
         loader.register(Billboard.class);
+        loader.register(BoundingBox.class);
         loader.register(Script.class);
 
 

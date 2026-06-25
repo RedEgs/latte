@@ -4,10 +4,13 @@ import com.google.gson.JsonObject;
 import org.joml.Vector3f;
 import redegs.Engine;
 import redegs.engine.engine.events.KeyPressEvent;
+import redegs.engine.engine.system.component.ComponentMeta;
+import redegs.engine.engine.system.component.ComponentRegistry;
 import redegs.engine.graphics.Camera;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+@ComponentMeta(name = "Controllable Camera", category = "Camera", description = "A camera controlled by keyboard and mouse.")
 public class ControllableCamera extends Camera {
     protected Vector3f front = new Vector3f(0, 0, -1);
     protected Vector3f up = new Vector3f(0, 1, 0);
@@ -45,6 +48,13 @@ public class ControllableCamera extends Camera {
         super(Engine.getScreenWidth(), Engine.getScreenHeight());
         name = "ControllableCameraComponent";
         init();
+    }
+
+    static {
+        ComponentRegistry.register(
+                ControllableCamera.class,
+                entity -> new ControllableCamera(entity)
+        );
     }
 
     private void init() {

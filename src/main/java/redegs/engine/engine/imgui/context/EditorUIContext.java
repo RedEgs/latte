@@ -12,6 +12,7 @@ import imgui.extension.texteditor.flag.TextEditorColor;
 import imgui.flag.ImGuiStyleVar;
 import imgui.type.ImBoolean;
 import imgui.type.ImString;
+import org.joml.Vector3f;
 import org.luaj.vm2.LuaError;
 import redegs.Engine;
 import redegs.engine.engine.events.KeyPressEvent;
@@ -60,6 +61,8 @@ public class EditorUIContext extends UIContext {
     protected ImGuiTextFilter componentTextFiler = new ImGuiTextFilter();
 
     protected HashMap<Script, TextEditor> scriptEditors = new HashMap<>();
+    protected Texture selectedTextureAsset = null;
+    protected Material selectedMaterialAsset = null;
 
 
     public EditorUIContext() {}
@@ -496,7 +499,11 @@ public class EditorUIContext extends UIContext {
             }
 
             if (ImGui.collapsingHeader("Materials")) {
-                float window_visible_x2 = ImGui.getCursorScreenPosX() + ImGui.getContentRegionAvailX();
+                if (ImGui.button("New Material")) {
+                    String name = nextMaterialName();
+                    selectedMaterialAsset = new Material(name, new Vector3f(1, 1, 1), null, null, 32.0f);
+                }
+
                 ArrayList<Material> materials = new ArrayList<>(AssetManager.getAll(Material.class));
                 for (int i = 0; i < materials.size(); i ++) {
                     ImGui.pushID(i);
@@ -504,17 +511,66 @@ public class EditorUIContext extends UIContext {
                     ImGui.pushStyleVar(ImGuiStyleVar.ImageBorderSize, 1.0f);
                     Material material = materials.get(i);
                     material.drawEditorImage(false);
+                    if (ImGui.isItemClicked()) {
+                        selectedMaterialAsset = material;
+                    }
                     ImGui.popStyleVar();
+
+                    ImGui.popID();
+                }
+
+                if (selectedMaterialAsset != null) {
+                    ImGui.separator();
+                    selectedMaterialAsset.drawEditorProperties(true);
+                }
+            }
+
+            if (ImGui.collapsingHeader("Textures")) {
+                if (ImGui.button("Import Texture ...")) {
+                    String path = FileDialogs.openFile(
+                            "Select texture asset",
+                            FileDialogs.homeDirectory(),
+                            new String[]{"*.png", "*.jpg", "*.jpeg", "*.bmp", "*.tga"},
+                            "Texture files"
+                    );
+                    if (path != null && !path.isBlank()) {
+                        selectedTextureAsset = new Texture(path);
+                    }
+                }
+                ImGui.sameLine();
+                if (ImGui.button("Black")) {
+                    selectedTextureAsset = Texture.black();
+                }
+                ImGui.sameLine();
+                if (ImGui.button("Empty")) {
+                    selectedTextureAsset = Texture.empty();
+                }
+
+                float window_visible_x2 = ImGui.getCursorScreenPosX() + ImGui.getContentRegionAvailX();
+                ArrayList<Texture> textures = new ArrayList<>(AssetManager.getAll(Texture.class));
+                for (int i = 0; i < textures.size(); i++) {
+                    ImGui.pushID(i);
+
+                    Texture texture = textures.get(i);
+                    ImGui.imageWithBg(texture.getId(), new ImVec2(40, 40));
+                    if (ImGui.isItemClicked()) {
+                        selectedTextureAsset = texture;
+                    }
+                    ImGui.setItemTooltip(texture.getDisplayName());
 
                     float last_img_x2 = ImGui.getItemRectMaxX();
                     float next_img_x2 = last_img_x2 + ImGui.getStyle().getItemSpacingX() + 40;
-                    if (i + 1 < materials.size() && next_img_x2 < window_visible_x2) {
+                    if (i + 1 < textures.size() && next_img_x2 < window_visible_x2) {
                         ImGui.sameLine();
                     }
 
                     ImGui.popID();
                 }
 
+                if (selectedTextureAsset != null) {
+                    ImGui.separator();
+                    selectedTextureAsset.drawAssetEditor();
+                }
             }
             ImGui.end();
         }
@@ -537,5 +593,17 @@ public class EditorUIContext extends UIContext {
 
     public int getGizmoCurrentOperation() {
         return this.currentOperation;
+    }
+
+    private String nextMaterialName() {
+        int index = AssetManager.getAll(Material.class).size() + 1;
+        String name = "Material " + index;
+
+        while (AssetManager.get(Material.class, name) != null) {
+            index++;
+            name = "Material " + index;
+        }
+
+        return name;
     }
 }

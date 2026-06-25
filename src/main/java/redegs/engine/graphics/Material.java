@@ -34,19 +34,60 @@ public class Material {
         AssetManager.register(name, this);
     }
 
-    public void Save() {
+    public JsonObject Save() {
         JsonObject o = new JsonObject();
+        o.addProperty("name", name);
         o.add("ambient", Save.Vec3ToJson(ambient));
-        o.add("diffuse", diffuse.Save());
-        o.add("specular", specular.Save());
+        if (diffuse != null) {
+            o.add("diffuse", diffuse.Save());
+        }
+        if (specular != null) {
+            o.add("specular", specular.Save());
+        }
         o.addProperty("shininess", shininess);
+        return o;
     }
 
     public void Load(JsonObject data) {
-        ambient = Save.JsonToVec3(data.getAsJsonObject("ambient"));
-        diffuse.Load(data.getAsJsonObject("diffuse"));
-        specular.Load(data.getAsJsonObject("specular"));
-        shininess = data.getAsFloat();
+        if (data.has("name") && !data.get("name").isJsonNull()) {
+            name = data.get("name").getAsString();
+        }
+        if (data.has("ambient") && !data.get("ambient").isJsonNull()) {
+            ambient = Save.JsonToVec3(data.getAsJsonObject("ambient"));
+        }
+        diffuse = data.has("diffuse") && !data.get("diffuse").isJsonNull()
+                ? Texture.fromJson(data.getAsJsonObject("diffuse"), 0)
+                : null;
+        specular = data.has("specular") && !data.get("specular").isJsonNull()
+                ? Texture.fromJson(data.getAsJsonObject("specular"), 0)
+                : null;
+        if (data.has("shininess") && !data.get("shininess").isJsonNull()) {
+            shininess = data.get("shininess").getAsFloat();
+        }
+    }
+
+    public static Material fromJson(JsonObject data, int entity, String fallbackName) {
+        String materialName = fallbackName;
+        if (data.has("name") && !data.get("name").isJsonNull()) {
+            materialName = data.get("name").getAsString();
+        }
+
+        Vector3f ambient = data.has("ambient") && !data.get("ambient").isJsonNull()
+                ? Save.JsonToVec3(data.getAsJsonObject("ambient"))
+                : new Vector3f(1, 1, 1);
+
+        Texture diffuse = data.has("diffuse") && !data.get("diffuse").isJsonNull()
+                ? Texture.fromJson(data.getAsJsonObject("diffuse"), entity)
+                : null;
+        Texture specular = data.has("specular") && !data.get("specular").isJsonNull()
+                ? Texture.fromJson(data.getAsJsonObject("specular"), entity)
+                : null;
+
+        float shininess = data.has("shininess") && !data.get("shininess").isJsonNull()
+                ? data.get("shininess").getAsFloat()
+                : 32.0f;
+
+        return new Material(materialName, ambient, diffuse, specular, shininess);
     }
 
     public void apply(Shader shader) {
@@ -150,14 +191,68 @@ public class Material {
         return this.name;
     }
 
+    public void drawEditorProperties(boolean textureSelectionEnabled) {
+        ImGui.text("Material: " + getName());
+
+        float[] ambientArr = new float[]{ambient.x, ambient.y, ambient.z};
+        if (ImGui.colorEdit3("Ambient", ambientArr)) {
+            ambient.set(ambientArr[0], ambientArr[1], ambientArr[2]);
+        }
+
+        float[] shininessArr = new float[]{shininess};
+        if (ImGui.sliderFloat("Shininess", shininessArr, 0, 256)) {
+            shininess = shininessArr[0];
+        }
+
+        if (textureSelectionEnabled) {
+            diffuse = drawTextureSlot("Diffuse", diffuse);
+            specular = drawTextureSlot("Specular", specular);
+        }
+    }
+
+    private Texture drawTextureSlot(String label, Texture current) {
+        Texture selected = current;
+        ImGui.spacing();
+        ImGui.text(label + ": " + getTextureDisplayName(current));
+
+        if (current != null) {
+            ImGui.imageWithBg(current.getId(), new ImVec2(40, 40));
+            ImGui.sameLine();
+        }
+
+        if (ImGui.button("Select##" + label)) {
+            ImGui.openPopup("SelectTexture##" + label);
+        }
+        ImGui.sameLine();
+        if (ImGui.button("Clear##" + label)) {
+            selected = null;
+        }
+
+        if (ImGui.beginPopup("SelectTexture##" + label)) {
+            ImGui.separatorText("Select texture");
+            Texture texture = Texture.drawEditorSelectionPane();
+            if (texture != null) {
+                selected = texture;
+                ImGui.closeCurrentPopup();
+            }
+            ImGui.endPopup();
+        }
+
+        return selected;
+    }
+
+    private String getTextureDisplayName(Texture texture) {
+        return texture == null ? "(none)" : texture.getDisplayName();
+    }
+
     public static Material fromTexture(Texture texture) {
-        String filename = Path.of(texture.location).getFileName().toString();
+        String filename = texture.getDisplayName();
         Material m = new Material(filename, new Vector3f(1, 1, 1), texture, null, 0);
         return m;
     }
 
     public static Material fromTexture(Texture texture, Texture texture2) {
-        String filename = Path.of(texture.location).getFileName().toString();
+        String filename = texture.getDisplayName();
         Material m = new Material(filename, new Vector3f(1, 1, 1), texture, texture2, 0);
         return m;
     }

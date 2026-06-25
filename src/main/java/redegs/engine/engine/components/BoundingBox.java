@@ -9,6 +9,8 @@ import org.lwjgl.BufferUtils;
 import redegs.engine.engine.gson.Save;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.Component;
+import redegs.engine.engine.system.component.ComponentMeta;
+import redegs.engine.engine.system.component.ComponentRegistry;
 import redegs.engine.graphics.Mesh;
 import redegs.engine.graphics.Vertex;
 
@@ -16,6 +18,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+@ComponentMeta(name = "Bounding Box", category = "Geometry", description = "An axis-aligned bounding box.")
 public class BoundingBox extends Component {
     public Vector3f min;
     public Vector3f max;
@@ -33,6 +36,17 @@ public class BoundingBox extends Component {
         this.name = "BoundingBoxComponent";
         this.min = min;
         this.max = max;
+    }
+
+    public BoundingBox(int entity) {
+        this(new Vector3f(0), new Vector3f(0), entity);
+    }
+
+    static {
+        ComponentRegistry.register(
+                BoundingBox.class,
+                entity -> new BoundingBox(entity)
+        );
     }
 
     @Override

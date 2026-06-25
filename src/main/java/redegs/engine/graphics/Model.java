@@ -1,5 +1,7 @@
 package redegs.engine.graphics;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import imgui.ImGui;
 import imgui.flag.ImGuiStyleVar;
@@ -105,6 +107,17 @@ public class Model extends Component {
         super.Save();
         JsonObject o = new JsonObject();
         o.addProperty("location", location);
+
+        JsonArray meshMaterials = new JsonArray();
+        for (Mesh mesh : meshes) {
+            JsonArray materialsJson = new JsonArray();
+            for (Material material : mesh.materials) {
+                materialsJson.add(material != null ? material.Save() : null);
+            }
+            meshMaterials.add(materialsJson);
+        }
+        o.add("meshMaterials", meshMaterials);
+
         return o;
     }
 
@@ -114,6 +127,9 @@ public class Model extends Component {
         if (data.has("location") && !data.get("location").isJsonNull()) {
             location = data.get("location").getAsString();
             init(location);
+        }
+        if (data.has("meshMaterials") && data.get("meshMaterials").isJsonArray()) {
+            loadMaterialOverrides(data.getAsJsonArray("meshMaterials"));
         }
     }
 
@@ -240,36 +256,28 @@ public class Model extends Component {
             if (ImGui.collapsingHeader("Materials")) {
                 ImGui.indent(16.0f);
 
-                ArrayList<Material> mats = new ArrayList<>();
-                for (Mesh m: meshes) {
-                    mats.addAll(m.materials);
-                }
-
                 ImGui.pushStyleVar(ImGuiStyleVar.ImageBorderSize, 1.0f);
 
-                int toAdd = -1;
-                Material toAddMat = null;
+                for (int meshIndex = 0; meshIndex < meshes.size(); meshIndex++) {
+                    Mesh mesh = meshes.get(meshIndex);
+                    for (int materialIndex = 0; materialIndex < mesh.materials.size(); materialIndex++) {
+                        ImGui.pushID(meshIndex + "-" + materialIndex);
 
-                for (Material m: mats) {
+                        Material material = mesh.materials.get(materialIndex);
+                        if (ImGui.collapsingHeader("Mesh " + meshIndex + " Material " + materialIndex)) {
+                            Material selected = material.drawEditorImage(true);
+                            if (selected != null) {
+                                mesh.materials.set(materialIndex, selected);
+                                material = selected;
+                            }
 
-                    Material selected = m.drawEditorImage(true);
-                    if (selected != null) {
-                        System.out.println("Selected");
-                        toAdd = mats.indexOf(m);
-                        toAddMat = selected;
+                            material.drawEditorProperties(true);
+                        }
+
+                        ImGui.popID();
                     }
                 }
 
-                if (toAddMat != null) {
-                    System.out.println("added");
-//                    mats.remove(toAdd);
-//                    mats.add(toAdd, toAddMat);
-                    var x = mats.get(toAdd);
-                    x.ambient = toAddMat.ambient;
-                    x.diffuse = toAddMat.diffuse;
-                    x.specular = toAddMat.specular;
-                    x.shininess = toAddMat.shininess;
-                }
                 ImGui.popStyleVar();
 
                 ImGui.unindent(16.0f);
@@ -406,6 +414,27 @@ public class Model extends Component {
 
     private String getDisplayLocation() {
         return location == null || location.isBlank() ? "(none)" : location;
+    }
+
+    private void loadMaterialOverrides(JsonArray meshMaterials) {
+        for (int meshIndex = 0; meshIndex < meshMaterials.size() && meshIndex < meshes.size(); meshIndex++) {
+            JsonElement meshElement = meshMaterials.get(meshIndex);
+            if (!meshElement.isJsonArray()) {
+                continue;
+            }
+
+            Mesh mesh = meshes.get(meshIndex);
+            JsonArray materialsJson = meshElement.getAsJsonArray();
+            for (int materialIndex = 0; materialIndex < materialsJson.size() && materialIndex < mesh.materials.size(); materialIndex++) {
+                JsonElement materialElement = materialsJson.get(materialIndex);
+                if (materialElement == null || materialElement.isJsonNull() || !materialElement.isJsonObject()) {
+                    continue;
+                }
+
+                String fallbackName = "entity" + entity + "_mesh" + meshIndex + "_material" + materialIndex;
+                mesh.materials.set(materialIndex, Material.fromJson(materialElement.getAsJsonObject(), entity, fallbackName));
+            }
+        }
     }
 
     public void addMesh(Mesh mesh) {

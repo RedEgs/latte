@@ -5,9 +5,13 @@ import imgui.ImGui;
 import imgui.ImVec2;
 import imgui.flag.ImGuiInputTextFlags;
 import imgui.flag.ImGuiSliderFlags;
+import org.lwjgl.BufferUtils;
 import org.w3c.dom.Text;
 import redegs.engine.engine.system.EntitySceneManager;
+import redegs.engine.engine.system.asset.AssetManager;
 import redegs.engine.engine.system.component.Component;
+import redegs.engine.engine.system.component.ComponentMeta;
+import redegs.engine.engine.system.component.ComponentRegistry;
 
 import javax.imageio.ImageIO;
 import javax.swing.text.html.parser.Entity;
@@ -26,6 +30,7 @@ import static org.lwjgl.opengl.GL21C.GL_SRGB_ALPHA;
 import static org.lwjgl.opengl.GL30C.GL_RGBA16F;
 import static org.lwjgl.opengl.GL30C.glGenerateMipmap;
 
+@ComponentMeta(name = "Texture", category = "Assets", description = "A texture asset or generated texture.")
 public class Texture extends Component {
     public enum AttachmentType {
         COLOR,
@@ -48,6 +53,11 @@ public class Texture extends Component {
     private TextureType texture_type = null;
     private Cubemap.Face face;
     protected String location;
+    private String generatedKind = null;
+    private int minFilter = GL_LINEAR_MIPMAP_LINEAR;
+    private int magFilter = GL_LINEAR;
+    private int wrapS = GL_REPEAT;
+    private int wrapT = GL_REPEAT;
 
     private boolean setup = false;
 
@@ -77,7 +87,7 @@ public class Texture extends Component {
 
         setup = true;
     }
-    private Texture(int entity) {
+    public Texture(int entity) {
         super(entity);
         name = "TextureComponent";
 
@@ -89,6 +99,13 @@ public class Texture extends Component {
 
 
     }
+
+    static {
+        ComponentRegistry.register(
+                Texture.class,
+                Texture::empty
+        );
+    }
     public Texture(int width, int height, AttachmentType attachment_type, int entity) {
         super(entity);
         name = "TextureComponent";
@@ -98,9 +115,8 @@ public class Texture extends Component {
         setup = true;
     }
     public Texture(String path_to_texture, Cubemap.Face face) {
-        super(EntitySceneManager.getInstance().createEntity());
+        super(-1);
         name = "TextureComponent";
-        EntitySceneManager.getInstance().addComponent(entity, this);
 
         id = glGenTextures();
         texture_type = TextureType.CUBEMAP;
@@ -111,9 +127,8 @@ public class Texture extends Component {
         setup = true;
     }
     public Texture(String path_to_texture) {
-        super(EntitySceneManager.getInstance().createEntity());
+        super(-1);
         name = "TextureComponent";
-        EntitySceneManager.getInstance().addComponent(entity, this);
 
         id = glGenTextures();
         texture_type = TextureType.IMAGE;
@@ -124,9 +139,8 @@ public class Texture extends Component {
         setup = true;
     }
     public Texture(int width, int height, AttachmentType attachment_type) {
-        super(EntitySceneManager.getInstance().createEntity());
+        super(-1);
         name = "TextureComponent";
-        EntitySceneManager.getInstance().addComponent(entity, this);
 
         this.attachment_type = attachment_type;
         createAttachment(width, height);
@@ -151,6 +165,9 @@ public class Texture extends Component {
         if (location != null) {
             o.addProperty("location", location);
         }
+        if (generatedKind != null) {
+            o.addProperty("generated", generatedKind);
+        }
 
         if (attachment_type != null) {
             o.addProperty("attachment_type", attachment_type.ordinal());
@@ -161,9 +178,13 @@ public class Texture extends Component {
         if (face != null) {
             o.addProperty("face", face.ordinal());
         }
+        o.addProperty("minFilter", minFilter);
+        o.addProperty("magFilter", magFilter);
+        o.addProperty("wrapS", wrapS);
+        o.addProperty("wrapT", wrapT);
 
         try {
-            if (location == null)
+            if (location == null && generatedKind == null && image != null)
                 o.addProperty("data", Base64.getEncoder().encodeToString(image.toBytes()));
         } catch (Exception e) {
             System.out.println("failed to write ot img ");
@@ -180,6 +201,9 @@ public class Texture extends Component {
             l = data.get("location").getAsString();
 
         }
+        if (data.get("generated") != null) {
+            generatedKind = data.get("generated").getAsString();
+        }
 
         if (data.get("attachment_type") != null) {
             attachment_type = AttachmentType.values()[data.get("attachment_type").getAsInt()];
@@ -190,14 +214,30 @@ public class Texture extends Component {
         if (data.get("face") != null) {
             face = Cubemap.Face.values()[data.get("face").getAsInt()];
         }
+        if (data.get("minFilter") != null) {
+            minFilter = data.get("minFilter").getAsInt();
+        }
+        if (data.get("magFilter") != null) {
+            magFilter = data.get("magFilter").getAsInt();
+        }
+        if (data.get("wrapS") != null) {
+            wrapS = data.get("wrapS").getAsInt();
+        }
+        if (data.get("wrapT") != null) {
+            wrapT = data.get("wrapT").getAsInt();
+        }
 
 
         if (l != null) {
             location = l;
             fromFile(l);
+        } else if ("black".equals(generatedKind)) {
+            createSolidColor(0, 0, 0, 255);
+        } else if ("empty".equals(generatedKind)) {
+            setup = false;
         } else {
-            String raw = data.get("data").getAsString();
-            if (raw != null) {
+            String raw = data.get("data") != null ? data.get("data").getAsString() : null;
+            if (raw != null && !raw.isBlank()) {
                 byte[] bytes = Base64.getDecoder().decode(raw);
                 fromBytes(bytes, texture_type, face);
             }
@@ -245,12 +285,9 @@ public class Texture extends Component {
         glBindTexture(GL_TEXTURE_2D, id);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         if (type == TextureType.IMAGE) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, image.bufferedImage.getWidth(), image.bufferedImage.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
             glGenerateMipmap(GL_TEXTURE_2D);
+            applyTextureParameters();
         } else if (type == TextureType.CUBEMAP) {
             if (face == null) throw new RuntimeException("Must give face index for this type.");
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face.ordinal(),
@@ -268,6 +305,10 @@ public class Texture extends Component {
         this.width = image.bufferedImage.getWidth();
         this.height = image.bufferedImage.getHeight();
         unbind();
+
+        if (type == TextureType.IMAGE && location != null) {
+            AssetManager.register(location, this);
+        }
     }
 
     private void fromBytes(byte[] bytes, TextureType type, Cubemap.Face face) {
@@ -281,12 +322,9 @@ public class Texture extends Component {
         glBindTexture(GL_TEXTURE_2D, id);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         if (type == TextureType.IMAGE) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, image.bufferedImage.getWidth(), image.bufferedImage.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, bb);
             glGenerateMipmap(GL_TEXTURE_2D);
+            applyTextureParameters();
         } else if (type == TextureType.CUBEMAP) {
             if (face == null) throw new RuntimeException("Must give face index for this type.");
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face.ordinal(),
@@ -399,10 +437,115 @@ public class Texture extends Component {
     }
 
     public void setNearestFiltering() {
+        minFilter = GL_NEAREST;
+        magFilter = GL_NEAREST;
+        applyTextureParameters();
+    }
+
+    private void createSolidColor(int r, int g, int b, int a) {
+        texture_type = TextureType.IMAGE;
+        attachment_type = null;
+        location = null;
+
+        ByteBuffer pixel = BufferUtils.createByteBuffer(4);
+        pixel.put((byte) r);
+        pixel.put((byte) g);
+        pixel.put((byte) b);
+        pixel.put((byte) a);
+        pixel.flip();
+
         bind();
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+        applyTextureParameters();
         unbind();
+
+        width = 1;
+        height = 1;
+        setup = true;
+    }
+
+    public void setLinearFiltering() {
+        minFilter = GL_LINEAR_MIPMAP_LINEAR;
+        magFilter = GL_LINEAR;
+        applyTextureParameters();
+    }
+
+    public void setRepeatWrapping() {
+        wrapS = GL_REPEAT;
+        wrapT = GL_REPEAT;
+        applyTextureParameters();
+    }
+
+    public void setClampWrapping() {
+        wrapS = GL_CLAMP_TO_EDGE;
+        wrapT = GL_CLAMP_TO_EDGE;
+        applyTextureParameters();
+    }
+
+    private void applyTextureParameters() {
+        bind();
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
+        unbind();
+    }
+
+    public void drawAssetEditor() {
+        ImGui.text("Location: " + getDisplayLocation());
+        ImGui.text("ID: " + id);
+
+        float[] size_arr = new float[]{width, height};
+        ImGui.inputFloat2("Size", size_arr, ImGuiInputTextFlags.ReadOnly);
+
+        ImGui.imageWithBg(id, new ImVec2(128, 128));
+        ImGui.spacing();
+
+        ImGui.text("Filtering");
+        if (ImGui.button("Nearest")) {
+            setNearestFiltering();
+        }
+        ImGui.sameLine();
+        if (ImGui.button("Linear")) {
+            setLinearFiltering();
+        }
+
+        ImGui.text("Wrapping");
+        if (ImGui.button("Repeat")) {
+            setRepeatWrapping();
+        }
+        ImGui.sameLine();
+        if (ImGui.button("Clamp")) {
+            setClampWrapping();
+        }
+    }
+
+    public static Texture drawEditorSelectionPane() {
+        Texture ret = null;
+        float window_visible_x2 = ImGui.getCursorScreenPosX() + ImGui.getContentRegionAvailX();
+        java.util.ArrayList<Texture> textures = new java.util.ArrayList<>(AssetManager.getAll(Texture.class));
+
+        for (int i = 0; i < textures.size(); i++) {
+            ImGui.pushID(i);
+
+            Texture texture = textures.get(i);
+            ImGui.imageWithBg(texture.getId(), new ImVec2(40, 40));
+            if (ImGui.isItemClicked()) {
+                ret = texture;
+            }
+            ImGui.setItemTooltip(texture.getDisplayName());
+
+            float last_img_x2 = ImGui.getItemRectMaxX();
+            float next_img_x2 = last_img_x2 + ImGui.getStyle().getItemSpacingX() + 40;
+            if (i + 1 < textures.size() && next_img_x2 < window_visible_x2) {
+                ImGui.sameLine();
+            }
+
+            ImGui.popID();
+        }
+
+        return ret;
     }
 
     public int getId() {
@@ -419,6 +562,36 @@ public class Texture extends Component {
         return face;
     }
     public String getLocation() {return location; }
+
+    public String getAssetKey() {
+        if (location != null && !location.isBlank()) {
+            return location;
+        }
+        if (generatedKind != null && !generatedKind.isBlank()) {
+            return generatedKind + "Texture";
+        }
+
+        return getDisplayName();
+    }
+
+    public String getDisplayName() {
+        if (generatedKind != null && !generatedKind.isBlank()) {
+            return generatedKind + "Texture";
+        }
+        if (location == null || location.isBlank()) {
+            return "Texture " + id;
+        }
+
+        try {
+            return java.nio.file.Path.of(location).getFileName().toString();
+        } catch (Exception e) {
+            return location;
+        }
+    }
+
+    private String getDisplayLocation() {
+        return location == null || location.isBlank() ? "(generated)" : location;
+    }
 
 
     public static Texture defaultTexture(int entity) {
@@ -439,5 +612,32 @@ public class Texture extends Component {
         } else {
             return defaultTexure;
         }
+    }
+
+    public static Texture empty(int entity) {
+        Texture texture = new Texture(entity);
+        texture.generatedKind = "empty";
+        AssetManager.register("emptyTexture", texture);
+        return texture;
+    }
+
+    public static Texture black(int entity) {
+        Texture texture = new Texture(entity);
+        texture.generatedKind = "black";
+        texture.createSolidColor(0, 0, 0, 255);
+        AssetManager.register("blackTexture", texture);
+        return texture;
+    }
+
+    public static Texture blackTexture(int entity) {
+        return black(entity);
+    }
+
+    public static Texture empty() {
+        return empty(-1);
+    }
+
+    public static Texture black() {
+        return black(-1);
     }
 }

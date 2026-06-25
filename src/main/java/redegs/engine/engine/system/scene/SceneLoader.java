@@ -4,6 +4,7 @@ import com.google.gson.*;
 import org.joml.Vector3f;
 import redegs.engine.engine.adapters.*;
 import redegs.engine.engine.system.EntitySceneManager;
+import redegs.engine.engine.system.asset.AssetManager;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.graphics.Model;
 import redegs.engine.graphics.Transform;
@@ -31,6 +32,11 @@ public class SceneLoader {
     public Scene LoadScene(String path) throws FileNotFoundException {
         JsonObject root = JsonParser.parseReader(new FileReader(path)).getAsJsonObject();
         Scene scene = new Scene();
+
+        AssetManager.clear();
+        if (root.has("assets") && root.get("assets").isJsonObject()) {
+            AssetManager.Load(root.getAsJsonObject("assets"));
+        }
 
         for (JsonElement el : root.getAsJsonArray("entities")) {
             JsonObject eo = el.getAsJsonObject();
@@ -88,6 +94,7 @@ public class SceneLoader {
         }
 
         JsonObject root = new JsonObject();
+        root.add("assets", AssetManager.Save());
         root.add("entities", entitiesJson);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create(); // only used for the outer shell now

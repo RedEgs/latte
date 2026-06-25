@@ -178,6 +178,7 @@ public final class EntitySceneManager {
         }
     }
 
+
     public <T> T getOrAddComponent(int entity, T component) {
         @SuppressWarnings("unchecked")
         Class<T> type = (Class<T>) component.getClass();

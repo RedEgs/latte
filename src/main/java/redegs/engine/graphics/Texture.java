@@ -27,8 +27,6 @@ import static org.lwjgl.opengl.GL30C.GL_RGBA16F;
 import static org.lwjgl.opengl.GL30C.glGenerateMipmap;
 
 public class Texture extends Component {
-
-
     public enum AttachmentType {
         COLOR,
         DEPTH,
@@ -52,6 +50,8 @@ public class Texture extends Component {
     protected String location;
 
     private boolean setup = false;
+
+    private static Texture defaultTexure;
 
     public Texture(String path_to_texture, Cubemap.Face face, int entity) {
         super(entity);
@@ -398,6 +398,13 @@ public class Texture extends Component {
         ImGui.unindent(16.0f);
     }
 
+    public void setNearestFiltering() {
+        bind();
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        unbind();
+    }
+
     public int getId() {
         return this.id;
     }
@@ -412,4 +419,25 @@ public class Texture extends Component {
         return face;
     }
     public String getLocation() {return location; }
+
+
+    public static Texture defaultTexture(int entity) {
+//        if (defaultTexure == null) {
+//            defaultTexure = new Texture("src/main/resources/textures/engine/defaultTexture.png");
+//            return defaultTexure;
+//        } else {
+//            return defaultTexure;
+//        }
+        return new Texture("src/main/resources/textures/engine/defaultTexture.png", entity);
+    }
+
+    public static Texture defaultTexture() {
+        if (defaultTexure == null) {
+            defaultTexure = new Texture("src/main/resources/textures/engine/defaultTexture.png");
+            defaultTexure.setNearestFiltering();
+            return defaultTexure;
+        } else {
+            return defaultTexure;
+        }
+    }
 }

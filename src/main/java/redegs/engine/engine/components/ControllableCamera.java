@@ -94,7 +94,7 @@ public class ControllableCamera extends Camera {
         super.onKeyPress(event);
 
         if (event.action == GLFW_PRESS) {
-            if (event.key < 349)
+            if (event.key < 349 && event.key > 0)
                 keys[event.key] = true;
             else
                 return;

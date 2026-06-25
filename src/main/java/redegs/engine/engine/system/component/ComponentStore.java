@@ -1,9 +1,6 @@
 package redegs.engine.engine.system.component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ComponentStore<T> {
     private final Map<Integer, T> components = new HashMap<>();
@@ -14,6 +11,10 @@ public class ComponentStore<T> {
 
     public T get(int entity) {
         return components.get(entity);
+    }
+
+    public Collection<T> get() {
+        return components.values();
     }
 
     public void remove(int entity) {

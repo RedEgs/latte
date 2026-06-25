@@ -36,14 +36,12 @@ public class BoundingBoxPass extends RenderPass {
         shader.use();
 
         if (render_context.selected_model != null) {
-            System.out.println("rendeirng");
             shader.setUniformMat4("model",  render_context.selected_model.getModelMatrix());
             shader.setUniform3f("col", new Vector3f(1, 1, 0));
             BoundingBox bb = render_context.selected_model.getBoundingBox();
             if (bb == null) {
                 render_context.selected_model.computeBoundingBox();
             } else {
-                System.out.println("rendeirng 2");
                 Mesh mesh = bb.toWireframeMesh();
                 mesh.DrawLines(shader);
             }

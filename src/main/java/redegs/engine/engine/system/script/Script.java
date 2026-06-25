@@ -1,14 +1,10 @@
-package redegs.engine.engine.script;
+package redegs.engine.engine.system.script;
 
 import com.google.gson.JsonObject;
 import imgui.ImGui;
-import org.joml.Vector3f;
 import org.luaj.vm2.Globals;
-import org.luaj.vm2.Lua;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.lib.OneArgFunction;
-import org.luaj.vm2.lib.ZeroArgFunction;
 import org.luaj.vm2.lib.jse.JsePlatform;
 import redegs.Engine;
 import redegs.engine.engine.system.EntitySceneManager;
@@ -16,7 +12,6 @@ import redegs.engine.engine.system.FileDialogs;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.component.ComponentMeta;
 import redegs.engine.engine.system.component.ComponentRegistry;
-import redegs.engine.graphics.lights.DirectionalLightSource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,20 +62,18 @@ public class Script extends Component {
 
     public void loadScript(String location) {
         if (location == null) return;
+        this.location = location;
 
         globals = JsePlatform.standardGlobals();
 
-        setupAPI();
-
         try {
-            source = Files.readString(Path.of(location));
+            Path p = Path.of(location);
+            source = Files.readString(p);
         } catch (Exception e) {
             throw new RuntimeException("Failed to find lua script: " + location);
         }
 
         rebuild();
-
-        loaded = true;
 
     }
 
@@ -95,14 +88,21 @@ public class Script extends Component {
 
     public LuaError rebuild() {
         try {
+            setupAPI();
 
             LuaValue chunk = globals.loadfile(location);
             chunk.call();
+            System.out.println("built!");
+            System.out.println(source);
 
+            fnOnStart = globals.get("OnStart");
             fnOnUpdate = globals.get("OnUpdate");
+
+            loaded = true;
 
         } catch (LuaError e) {
             errored = true;
+            loaded = false;
             System.err.println("Failed to load lua chunk: " + e.getMessage());
             return e;
         }
@@ -124,9 +124,14 @@ public class Script extends Component {
     public void Load(JsonObject data) {
         super.Load(data);
         scriptName = data.get("scriptName").getAsString();
-        source = data.get("source").getAsString();
-        location = data.get("location").getAsString();
-        loadScript(location);
+        if (data.get("location") == null) {
+            source = data.get("source").getAsString();
+        } else {
+            location = data.get("location").getAsString();
+            loadScript(location);
+        }
+
+
     }
 
     @Override
@@ -157,7 +162,13 @@ public class Script extends Component {
         }
     }
 
+    public void OnStart() {
+        if (!loaded || errored || !Engine.getGameMode()) return;
 
+        if (!fnOnStart.isnil()) {
+            fnOnStart.call();
+        }
+    }
 
 
 

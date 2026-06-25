@@ -6,6 +6,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryStack;
+import redegs.engine.engine.system.asset.AssetManager;
 
 import java.io.File;
 import java.nio.IntBuffer;
@@ -156,7 +157,7 @@ public class ModelLoader {
             Texture diffuse  = loadTexture(aiMaterial, aiTextureType_DIFFUSE,  directory, stack, entity);
             Texture specular = loadTexture(aiMaterial, aiTextureType_SPECULAR, directory, stack, entity);
 
-            return new Material(ambient, diffuse, specular, shininess);
+            return new Material("entity" + entity, ambient, diffuse, specular, shininess);
         }
     }
 
@@ -180,6 +181,13 @@ public class ModelLoader {
     }
 
     private static Material defaultMaterial() {
-        return new Material(new Vector3f(0.8f, 0.8f, 0.8f), null, null, 32.0f);
+        String default_name = "defaultMaterial";
+        Material m = AssetManager.get(Material.class, default_name);
+        if (m != null) {
+            return  m;
+        } else {
+            return new Material(default_name, new Vector3f(0.8f, 0.8f, 0.8f), null, null, 32.0f);
+        }
+
     }
 }

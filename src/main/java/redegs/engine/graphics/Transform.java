@@ -5,6 +5,7 @@ import imgui.ImGui;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import redegs.engine.engine.gson.Save;
+import redegs.engine.engine.system.script.LuaExpose;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.component.ComponentMeta;
 import redegs.engine.engine.system.component.ComponentRegistry;
@@ -105,5 +106,41 @@ public class Transform extends Component {
         scale.set(scaleArr[0], scaleArr[1], scaleArr[2]);
 
         ImGui.unindent(16.0f);
+    }
+
+
+
+
+
+
+
+    @LuaExpose
+    public void setPosition(float x, float y, float z) {
+        setPosition(new Vector3f(x, y, z));
+    }
+
+    @LuaExpose
+    public Vector3f getPosition() {
+        return this.position;
+    }
+
+    @LuaExpose
+    public void setRotation(float x, float y, float z) {
+        this.rotation.set(new Vector3f(x, y, z));
+    }
+
+    @LuaExpose
+    public Vector3f getRotation() {
+        return this.rotation;
+    }
+
+    @LuaExpose
+    public void setScale(float x, float y, float z) {
+        this.scale.set(new Vector3f(x, y, z));
+    }
+
+    @LuaExpose
+    public Vector3f getScale() {
+        return this.scale;
     }
 }

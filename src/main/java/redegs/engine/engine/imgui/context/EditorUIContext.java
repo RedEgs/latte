@@ -2,15 +2,14 @@ package redegs.engine.engine.imgui.context;
 
 import imgui.ImGui;
 import imgui.ImGuiTextFilter;
-import imgui.ImVec4;
+import imgui.ImVec2;
 import imgui.extension.imguizmo.ImGuizmo;
 import imgui.extension.imguizmo.flag.Mode;
 import imgui.extension.imguizmo.flag.Operation;
 import imgui.extension.texteditor.TextEditor;
 import imgui.extension.texteditor.TextEditorLanguage;
 import imgui.extension.texteditor.flag.TextEditorColor;
-import imgui.flag.ImGuiCol;
-import imgui.flag.ImGuiWindowFlags;
+import imgui.flag.ImGuiStyleVar;
 import imgui.type.ImBoolean;
 import imgui.type.ImString;
 import org.luaj.vm2.LuaError;
@@ -18,21 +17,27 @@ import redegs.Engine;
 import redegs.engine.engine.events.KeyPressEvent;
 import redegs.engine.engine.imgui.UIContext;
 import redegs.engine.engine.imgui.UIManager;
-import redegs.engine.engine.script.Script;
-import redegs.engine.engine.script.ScriptAPI;
+import redegs.engine.engine.system.asset.AssetManager;
+import redegs.engine.engine.system.script.Script;
+import redegs.engine.engine.system.script.ScriptAPI;
+import redegs.engine.engine.system.script.ScriptManager;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.FileDialogs;
 import redegs.engine.engine.system.PerformanceMetricManager;
+import redegs.engine.engine.system.asset.ModelAsset;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.component.ComponentRegistry;
 import redegs.engine.engine.system.scene.Scene;
-import redegs.engine.engine.system.scene.SceneLoader;
+import redegs.engine.graphics.Material;
+import redegs.engine.graphics.Model;
+import redegs.engine.graphics.Texture;
 import redegs.engine.graphics.Transform;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -107,8 +112,6 @@ public class EditorUIContext extends UIContext {
         PerformanceMetricManager pfm =  PerformanceMetricManager.getInstance();
 
 
-
-
         if (ImGui.beginMainMenuBar()) {
             if (ImGui.beginMenu("File")) {
                 if (ImGui.beginMenu("Create...")) {
@@ -174,6 +177,7 @@ public class EditorUIContext extends UIContext {
                } else {
                    if (ImGui.menuItem("Start Testing")) {
                        Engine.setGameMode(true);
+                       ScriptManager.buildAllScripts();
                    }
                }
 
@@ -308,13 +312,23 @@ public class EditorUIContext extends UIContext {
                 if (selected_entity != -1) {
                     List<?> components = esm.GetScene().getComponents(selected_entity);
                     if (!components.isEmpty()) {
-                        for (var c : components) {
+                        for (int i = 0; i < components.size(); i++) {
                             try{
-                                Component r = (Component) c;
-
+                                Component c = (Component) components.get(i);
+                                ImGui.pushID(i);
                                 ImGui.indent(16.0f);
-                                if (ImGui.collapsingHeader(r.getName())) {
-                                    r.OnEditorInspect();
+
+                                boolean open = ImGui.collapsingHeader(c.getName() + "##" + i);
+                                if (ImGui.beginPopupContextItem()) {
+                                    if (ImGui.selectable("Delete Component")) {
+                                        esm.removeComponent(selected_entity, c.getClass());
+                                    }
+                                    ImGui.endPopup();
+                                }
+
+                                if (open) {
+                                    c.OnEditorInspect();
+
 
                                     if (c instanceof Transform) {
                                         Transform m = (Transform) c;
@@ -355,11 +369,21 @@ public class EditorUIContext extends UIContext {
                                                 editor.setText(s.getSource());
                                         } ImGui.sameLine();
                                         if (ImGui.button("Save")) {
-                                            try {
-                                                Files.writeString(Paths.get(s.getLocation()), editor.getText(), StandardCharsets.UTF_8);
-                                            } catch (Exception e) {
-                                                throw new RuntimeException("Failed to save script editor to lua file path: " + s.getLocation());
+                                            if (s.getLocation() == null) {
+                                                String path = FileDialogs.saveFile("Save .lua file", FileDialogs.homeDirectory(), new String[]{"*.lua"}, "save .lua file");
+                                                File nf = new File(path);
+                                                nf.createNewFile();
+                                                s.loadScript(path);
+
+                                            } else {
+                                                try {
+                                                    Files.writeString(Paths.get(s.getLocation()), editor.getText(), StandardCharsets.UTF_8);
+                                                } catch (Exception e) {
+                                                    throw new RuntimeException("Failed to save script editor to lua file path: " + s.getLocation());
+                                                }
                                             }
+
+
                                         } ImGui.sameLine();
                                         if (ImGui.button("Rebuild")) {
                                             LuaError e = s.rebuild();
@@ -385,8 +409,15 @@ public class EditorUIContext extends UIContext {
                                         ImGui.spacing();
 
                                     }
+
+
                                 };
+
+
+
+
                                 ImGui.unindent(16.0f);
+                                ImGui.popID();
                                 ImGui.spacing();
 
 
@@ -434,6 +465,60 @@ public class EditorUIContext extends UIContext {
             }
             ImGui.end();
         }
+
+        if (ImGui.begin("AssetManager")) {
+            if (ImGui.collapsingHeader("Models")) {
+                if (ImGui.button("Import .gltf ...")) {
+                    String path = FileDialogs.openFile("Select model asset", FileDialogs.homeDirectory(), new String[]{"*.gltf", "*.glb"}, "Model files");
+                    if (path != null && !path.isBlank()) {
+                        ModelAsset.importFile(path);
+                    }
+                }
+
+                ArrayList<ModelAsset> modelAssets = new ArrayList<>(AssetManager.getAll(ModelAsset.class));
+                if (modelAssets.isEmpty()) {
+                    ImGui.text("No model assets imported.");
+                }
+
+                for (int i = 0; i < modelAssets.size(); i++) {
+                    ModelAsset asset = modelAssets.get(i);
+                    ImGui.pushID(i);
+
+                    if (ImGui.selectable(asset.getName())) {
+                        if (selected_entity != -1 && esm.hasComponent(selected_entity, Model.class)) {
+                            esm.getComponent(selected_entity, Model.class).loadAsset(asset);
+                        }
+                    }
+                    ImGui.setItemTooltip(asset.getPath());
+
+                    ImGui.popID();
+                }
+            }
+
+            if (ImGui.collapsingHeader("Materials")) {
+                float window_visible_x2 = ImGui.getCursorScreenPosX() + ImGui.getContentRegionAvailX();
+                ArrayList<Material> materials = new ArrayList<>(AssetManager.getAll(Material.class));
+                for (int i = 0; i < materials.size(); i ++) {
+                    ImGui.pushID(i);
+
+                    ImGui.pushStyleVar(ImGuiStyleVar.ImageBorderSize, 1.0f);
+                    Material material = materials.get(i);
+                    material.drawEditorImage(false);
+                    ImGui.popStyleVar();
+
+                    float last_img_x2 = ImGui.getItemRectMaxX();
+                    float next_img_x2 = last_img_x2 + ImGui.getStyle().getItemSpacingX() + 40;
+                    if (i + 1 < materials.size() && next_img_x2 < window_visible_x2) {
+                        ImGui.sameLine();
+                    }
+
+                    ImGui.popID();
+                }
+
+            }
+            ImGui.end();
+        }
+
 
         ImGui.setNextWindowSize(200, 60);
         ImGui.setNextWindowPos(Engine.getScreenWidth() - 220, 40);

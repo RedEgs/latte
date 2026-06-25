@@ -2,11 +2,13 @@ package redegs.engine.graphics;
 
 import com.google.gson.JsonObject;
 import imgui.ImGui;
+import imgui.flag.ImGuiStyleVar;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import redegs.engine.engine.components.BoundingBox;
 import redegs.engine.engine.gson.Save;
 import redegs.engine.engine.system.FileDialogs;
+import redegs.engine.engine.system.asset.ModelAsset;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.ComponentMeta;
@@ -92,9 +94,7 @@ public class Model extends Component {
         this.transform.model_matrix = new Matrix4f().identity();
 
         try {
-            this.meshes.addAll(ModelLoader.load(path, entity));
-            invalidateBoundingBox();  // clear any stale cache before recomputing
-            computeBoundingBox();
+            loadFromFile(path);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -111,8 +111,10 @@ public class Model extends Component {
     @Override
     public void Load(JsonObject data) {
         super.Load(data);
-        location = data.get("location").getAsString();
-        init(location);
+        if (data.has("location") && !data.get("location").isJsonNull()) {
+            location = data.get("location").getAsString();
+            init(location);
+        }
     }
 
     public void Draw(Shader shader) {
@@ -184,19 +186,97 @@ public class Model extends Component {
             updateModelMatrix();
             getModelMatrix().get(modelMatrix);
 
-            ImGui.text("Location (Path): " + location);
+            ImGui.text("Location (Path): " + getDisplayLocation());
             ImGui.sameLine();
-            if (ImGui.button("Load .gltf ...")) {
-                String path = FileDialogs.openFile("Select .gltf...", FileDialogs.homeDirectory(), new String[]{"*.gltf"}, ".gltf files");
-                this.location = path;
-                this.meshes.addAll(ModelLoader.load(path, entity));
-                invalidateBoundingBox();
-                computeBoundingBox();
+            if (ImGui.button("Import .gltf Asset ...")) {
+                String path = FileDialogs.openFile("Select .gltf...", FileDialogs.homeDirectory(), new String[]{"*.gltf", "*.glb"}, "Model files");
+                if (path != null && !path.isBlank()) {
+                    loadAsset(ModelAsset.importFile(path));
+                }
             }
 
-            if (cachedBoundingBox != null) {
-                cachedBoundingBox.OnEditorInspect();
+            if (location != null && !location.isBlank()) {
+                ImGui.sameLine();
+                if (ImGui.button("Reload")) {
+                    loadFromFile(location);
+                }
             }
+
+            if (ImGui.collapsingHeader("Model Assets")) {
+                ImGui.indent(16.0f);
+                ArrayList<ModelAsset> modelAssets = new ArrayList<>(redegs.engine.engine.system.asset.AssetManager.getAll(ModelAsset.class));
+                if (modelAssets.isEmpty()) {
+                    ImGui.text("No model assets imported.");
+                }
+
+                for (int i = 0; i < modelAssets.size(); i++) {
+                    ModelAsset asset = modelAssets.get(i);
+                    ImGui.pushID(i);
+
+                    String label = asset.getName();
+                    if (asset.getPath().equals(location)) {
+                        label += " (current)";
+                    }
+
+                    if (ImGui.selectable(label)) {
+                        loadAsset(asset);
+                    }
+                    ImGui.setItemTooltip(asset.getPath());
+
+                    ImGui.popID();
+                }
+                ImGui.unindent(16.0f);
+            }
+
+            ImGui.indent(16.0f);
+
+            if (cachedBoundingBox != null) {
+                if (ImGui.collapsingHeader("Bounding Box")) {
+                    cachedBoundingBox.OnEditorInspect();
+                    ImGui.spacing();
+                }
+            }
+
+            if (ImGui.collapsingHeader("Materials")) {
+                ImGui.indent(16.0f);
+
+                ArrayList<Material> mats = new ArrayList<>();
+                for (Mesh m: meshes) {
+                    mats.addAll(m.materials);
+                }
+
+                ImGui.pushStyleVar(ImGuiStyleVar.ImageBorderSize, 1.0f);
+
+                int toAdd = -1;
+                Material toAddMat = null;
+
+                for (Material m: mats) {
+
+                    Material selected = m.drawEditorImage(true);
+                    if (selected != null) {
+                        System.out.println("Selected");
+                        toAdd = mats.indexOf(m);
+                        toAddMat = selected;
+                    }
+                }
+
+                if (toAddMat != null) {
+                    System.out.println("added");
+//                    mats.remove(toAdd);
+//                    mats.add(toAdd, toAddMat);
+                    var x = mats.get(toAdd);
+                    x.ambient = toAddMat.ambient;
+                    x.diffuse = toAddMat.diffuse;
+                    x.specular = toAddMat.specular;
+                    x.shininess = toAddMat.shininess;
+                }
+                ImGui.popStyleVar();
+
+                ImGui.unindent(16.0f);
+            }
+
+            ImGui.unindent(16.0f);
+
         }
     }
 
@@ -303,6 +383,29 @@ public class Model extends Component {
 
     public void invalidateBoundingBox() {
         cachedBoundingBox = null;
+    }
+
+    public void loadAsset(ModelAsset asset) {
+        if (asset != null) {
+            loadFromFile(asset.getPath());
+        }
+    }
+
+    public void loadFromFile(String path) {
+        if (path == null || path.isBlank()) {
+            return;
+        }
+
+        List<Mesh> loadedMeshes = ModelLoader.load(path, entity);
+        this.location = path;
+        this.meshes.clear();
+        this.meshes.addAll(loadedMeshes);
+        invalidateBoundingBox();
+        computeBoundingBox();
+    }
+
+    private String getDisplayLocation() {
+        return location == null || location.isBlank() ? "(none)" : location;
     }
 
     public void addMesh(Mesh mesh) {

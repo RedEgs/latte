@@ -56,7 +56,6 @@ public class BoundingBox extends Component {
     public void OnEditorInspect() {
         super.OnEditorInspect();
 
-        ImGui.spacing();
         ImGui.text("Bounding Box");
         ImGui.separator();
         ImGui.spacing();

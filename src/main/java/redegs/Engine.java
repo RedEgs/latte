@@ -1,7 +1,5 @@
 package redegs;
 
-import com.sun.tools.javac.Main;
-import org.joml.Random;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -13,7 +11,8 @@ import redegs.engine.engine.events.KeyPressEvent;
 import redegs.engine.engine.imgui.UIContext;
 import redegs.engine.engine.imgui.UIManager;
 import redegs.engine.engine.imgui.context.EditorUIContext;
-import redegs.engine.engine.script.Script;
+import redegs.engine.engine.system.script.Script;
+import redegs.engine.engine.system.script.ScriptManager;
 import redegs.engine.engine.system.*;
 import redegs.engine.engine.system.component.ComponentBootstrapper;
 import redegs.engine.engine.system.scene.Scene;
@@ -183,6 +182,10 @@ public class Engine {
             }
         }
 
+        if (gameMode) {
+            ScriptManager.buildAllScripts();
+        }
+
 
 
 //        int m_id = esm.createEntity();
@@ -254,7 +257,11 @@ public class Engine {
 
     public void Run() throws GLException {
         editorMode = Boolean.getBoolean("engine.editorMode");
-        gameMode = !editorMode;
+        if (editorMode) {
+            gameMode = false;
+        } else {
+            gameMode = true;
+        }
         name = "Latte" + " " + version + " (DevEnabled = " + editorMode + ")";
         Init();
         Loop();

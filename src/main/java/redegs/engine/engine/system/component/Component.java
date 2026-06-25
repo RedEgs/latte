@@ -3,6 +3,7 @@ package redegs.engine.engine.system.component;
 import com.google.gson.JsonObject;
 import org.joml.Vector3f;
 import redegs.engine.engine.system.EntitySceneManager;
+import redegs.engine.engine.system.script.LuaExpose;
 import redegs.engine.graphics.Shader;
 import redegs.engine.graphics.lights.DirectionalLightSource;
 
@@ -52,10 +53,12 @@ public class Component {
         // no-op by default — components with no save-worthy state don't need to override
     }
 
+    @LuaExpose
     public String getName(){
         return name;
     };
 
+    @LuaExpose
     public int getEntity() {
         return this.entity;
     }

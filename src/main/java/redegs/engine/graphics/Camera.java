@@ -11,6 +11,7 @@ import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.component.ComponentMeta;
 import redegs.engine.engine.system.component.ComponentRegistry;
 import redegs.engine.engine.system.EntitySceneManager;
+import redegs.engine.engine.system.script.LuaExpose;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_DISABLED;
@@ -117,11 +118,13 @@ public class Camera extends Component {
      * Translates the camera's transform by the given offset and
      * rebuilds the view matrix to reflect the new position.
      */
+    @LuaExpose
     public void translateViewPosition(Vector3f pos) {
         this.transform.position.add(pos);
         updateViewMatrix();
     }
 
+    @LuaExpose
     public void setFov(Float fov, Integer width, Integer height) {
         this.fov = fov;
 
@@ -133,10 +136,12 @@ public class Camera extends Component {
         this.projection = perspectiveMatrix(rfov, aspectRatio, nearPlane, farPlane);
     }
 
+    @LuaExpose
     public void setFov(Float fov) {
         this.setFov(fov, this.width, this.height);
     }
 
+    @LuaExpose
     public Float getFov() {
         return fov;
     }
@@ -168,15 +173,18 @@ public class Camera extends Component {
      * Sets the camera's position (stored on the Transform component)
      * and rebuilds the view matrix.
      */
+    @LuaExpose
     public void setPosition(Vector3f pos) {
         this.transform.position.set(pos);
         updateViewMatrix();
     }
 
+    @LuaExpose
     public Transform getTransform() {
         return this.transform;
     }
 
+    @LuaExpose
     public Vector3f getPosition() {
         return this.transform.position;
     }
@@ -207,16 +215,19 @@ public class Camera extends Component {
         );
     }
 
+    @LuaExpose
     public void unlockMouse() {
         glfwSetInputMode(Engine.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         mouse_locked = false;
     }
 
+    @LuaExpose
     public void lockMouse() {
         glfwSetInputMode(Engine.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         mouse_locked = true;
     }
 
+    @LuaExpose
     public void toggleMouseLock() {
         if (mouse_locked) {
             unlockMouse();

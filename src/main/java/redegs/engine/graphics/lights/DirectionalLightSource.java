@@ -9,6 +9,7 @@ import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.component.ComponentMeta;
 import redegs.engine.engine.system.component.ComponentRegistry;
+import redegs.engine.engine.system.script.LuaExpose;
 import redegs.engine.graphics.Transform;
 
 @ComponentMeta(name = "Directional Light", category = "Lighting", description = "A directional light source.")
@@ -203,8 +204,50 @@ public class DirectionalLightSource extends Component {
         ImGui.unindent(16.0f);
     }
 
+    @LuaExpose
     public Transform getTransform() {
         return transform;
+    }
+
+    @LuaExpose
+    public Vector3f getDirection() {
+        return direction;
+    }
+
+    @LuaExpose
+    public void setDirection(float x, float y, float z) {
+        direction.set(x, y, z).normalize();
+        initRotationFromDirection();
+    }
+
+    @LuaExpose
+    public Vector3f getAmbient() {
+        return ambient;
+    }
+
+    @LuaExpose
+    public void setAmbient(float r, float g, float b) {
+        ambient.set(r, g, b);
+    }
+
+    @LuaExpose
+    public Vector3f getDiffuse() {
+        return diffuse;
+    }
+
+    @LuaExpose
+    public void setDiffuse(float r, float g, float b) {
+        diffuse.set(r, g, b);
+    }
+
+    @LuaExpose
+    public Vector3f getSpecular() {
+        return specular;
+    }
+
+    @LuaExpose
+    public void setSpecular(float r, float g, float b) {
+        specular.set(r, g, b);
     }
 
     public static Matrix4f getLightMatrix() {

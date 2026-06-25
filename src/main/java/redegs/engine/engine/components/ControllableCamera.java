@@ -6,6 +6,7 @@ import redegs.Engine;
 import redegs.engine.engine.events.KeyPressEvent;
 import redegs.engine.engine.system.component.ComponentMeta;
 import redegs.engine.engine.system.component.ComponentRegistry;
+import redegs.engine.engine.system.script.LuaExpose;
 import redegs.engine.graphics.Camera;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -209,11 +210,13 @@ public class ControllableCamera extends Camera {
     }
 
     // Getter/setter for mouse sensitivity
+    @LuaExpose
     public void setMouseSensitivity(float sensitivity) {
         this.mouse_sensitivity = sensitivity;
     }
 
     // Reset mouse position (useful when regaining focus)
+    @LuaExpose
     public void resetMousePosition() {
         first_mouse = true;
     }

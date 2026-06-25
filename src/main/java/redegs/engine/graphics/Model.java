@@ -15,6 +15,7 @@ import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.ComponentMeta;
 import redegs.engine.engine.system.component.ComponentRegistry;
+import redegs.engine.engine.system.script.LuaExpose;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -305,6 +306,7 @@ public class Model extends Component {
                 .translate(originOffset);
     }
 
+    @LuaExpose
     public void centerOrigin() {
         Vector3f sum = new Vector3f(0, 0, 0);
         int totalVertices = 0;
@@ -399,6 +401,7 @@ public class Model extends Component {
         }
     }
 
+    @LuaExpose
     public void loadFromFile(String path) {
         if (path == null || path.isBlank()) {
             return;
@@ -468,6 +471,7 @@ public class Model extends Component {
         return this.transform.model_matrix;
     }
 
+    @LuaExpose
     public String getPath() {
         return this.location;
     }
@@ -476,10 +480,12 @@ public class Model extends Component {
         this.transform.model_matrix = matrix;
     }
 
+    @LuaExpose
     public void disableRenderInDebug() {
         this._renderInDebug = false;
     }
 
+    @LuaExpose
     public void enableRenderInDebug() {
         this._renderInDebug = true;
     }

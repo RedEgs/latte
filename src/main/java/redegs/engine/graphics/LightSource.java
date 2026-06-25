@@ -6,6 +6,7 @@ import org.joml.Vector3f;
 import redegs.engine.engine.gson.Save;
 import redegs.engine.engine.system.EntitySceneManager;
 import redegs.engine.engine.system.component.Component;
+import redegs.engine.engine.system.script.LuaExpose;
 
 public class LightSource extends Component {
     public Vector3f position;
@@ -97,8 +98,40 @@ public class LightSource extends Component {
         ImGui.unindent(16.0f);
     }
 
+    @LuaExpose
     public Transform getTransform() {
         return transform;
+    }
+
+    @LuaExpose
+    public Vector3f getPosition() {
+        return position;
+    }
+
+    @LuaExpose
+    public void setPosition(float x, float y, float z) {
+        position.set(x, y, z);
+        transform.position.set(position);
+    }
+
+    @LuaExpose
+    public Vector3f getColor() {
+        return color;
+    }
+
+    @LuaExpose
+    public void setColor(float r, float g, float b) {
+        color.set(r, g, b);
+    }
+
+    @LuaExpose
+    public float getIntensity() {
+        return intensity;
+    }
+
+    @LuaExpose
+    public void setIntensity(float intensity) {
+        this.intensity = intensity;
     }
 
     @Override

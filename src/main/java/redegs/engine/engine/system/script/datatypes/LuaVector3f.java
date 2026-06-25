@@ -21,9 +21,13 @@ public class LuaVector3f {
         ud.set("set", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                v.x = (float) args.arg(2).todouble();
-                v.y = (float) args.arg(3).todouble();
-                v.z = (float) args.arg(4).todouble();
+                int offset = args.narg() > 0 && args.arg(1).raweq(ud) ? 2 : 1;
+                v.x = (float) args.arg(offset).todouble();
+                v.y = (float) args.arg(offset + 1).todouble();
+                v.z = (float) args.arg(offset + 2).todouble();
+                ud.set("x", v.x);
+                ud.set("y", v.y);
+                ud.set("z", v.z);
                 return ud;
             }
         });

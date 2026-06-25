@@ -8,6 +8,7 @@ import redegs.engine.engine.system.FileDialogs;
 import redegs.engine.engine.system.component.Component;
 import redegs.engine.engine.system.component.ComponentMeta;
 import redegs.engine.engine.system.component.ComponentRegistry;
+import redegs.engine.engine.system.script.LuaExpose;
 import redegs.engine.graphics.*;
 
 @ComponentMeta(name = "Billboard", category = "3D", description = "A 3D Camera-Fixed Quad with a Texture.")
@@ -148,6 +149,7 @@ public class Billboard extends Component  {
         mesh.DrawNoMaterials(shader);
     }
 
+    @LuaExpose
     public void setPosition(Vector3f pos) {
         this.transform.position.set(pos);
 
@@ -159,15 +161,38 @@ public class Billboard extends Component  {
         );
     }
 
+    @LuaExpose
     public Vector3f getPosition() {
         return transform.position;
     }
 
+    @LuaExpose
     public void setOntop(boolean value) {
         this.ontop = value;
     }
 
+    @LuaExpose
     public boolean getOntop() {
         return this.ontop;
+    }
+
+    @LuaExpose
+    public void setSize(float size) {
+        this.size = size;
+    }
+
+    @LuaExpose
+    public float getSize() {
+        return size;
+    }
+
+    @LuaExpose
+    public void setYLock(boolean value) {
+        this.ylock = value;
+    }
+
+    @LuaExpose
+    public boolean getYLock() {
+        return ylock;
     }
 }

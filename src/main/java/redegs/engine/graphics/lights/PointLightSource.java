@@ -6,6 +6,7 @@ import org.joml.Vector3f;
 import redegs.engine.engine.gson.Save;
 import redegs.engine.engine.system.component.ComponentMeta;
 import redegs.engine.engine.system.component.ComponentRegistry;
+import redegs.engine.engine.system.script.LuaExpose;
 import redegs.engine.graphics.LightSource;
 import redegs.engine.graphics.Transform;
 
@@ -38,6 +39,16 @@ public class PointLightSource extends LightSource {
                 PointLightSource.class,
                 entity -> new PointLightSource(entity)
         );
+    }
+
+    @LuaExpose
+    public float getRadius() {
+        return radius;
+    }
+
+    @LuaExpose
+    public void setRadius(float radius) {
+        this.radius = radius;
     }
 
     @Override

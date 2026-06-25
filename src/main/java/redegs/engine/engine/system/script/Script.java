@@ -60,6 +60,7 @@ public class Script extends Component {
         );
     }
 
+    @LuaExpose
     public void loadScript(String location) {
         if (location == null) return;
         this.location = location;
@@ -86,6 +87,7 @@ public class Script extends Component {
     }
 
 
+    @LuaExpose
     public LuaError rebuild() {
         try {
             setupAPI();
@@ -174,18 +176,22 @@ public class Script extends Component {
 
 
 
+    @LuaExpose
     public String getSource() {
         return source;
     }
 
+    @LuaExpose
     public String getScriptName() {
         return scriptName;
     }
 
+    @LuaExpose
     public String getLocation() {
         return location;
     }
 
+    @LuaExpose
     public boolean isLoaded() {
         return loaded;
     }
